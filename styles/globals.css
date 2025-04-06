@@ -266,9 +266,11 @@ button.sound-off {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.8);
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Changed from center to allow scrolling */
   justify-content: center;
   z-index: 10;
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding: 20px 0; /* Add padding to create space at top and bottom */
 }
 
 .question-content {
@@ -279,6 +281,8 @@ button.sound-off {
   max-width: 800px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   text-align: center;
+  margin: 20px 0; /* Add margin to create space for scrolling */
+  max-height: none; /* Remove any max-height constraints */
 }
 
 .question-text {
@@ -798,14 +802,26 @@ button.sound-off {
     min-width: auto;
   }
   
+  .question-view {
+    padding: 10px 0;
+    align-items: flex-start;
+  }
+  
   .question-content {
     width: 95%;
     padding: 15px;
+    margin: 10px 0 40px 0; /* Extra bottom margin to ensure enough scrollable area */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+  }
+  
+  .player-selection {
+    padding-bottom: 20px; /* Add extra padding at bottom */
   }
   
   .back-button {
     width: 100%;
     margin-top: 10px;
+    margin-bottom: 20px; /* Add bottom margin for spacing */
     font-size: 0.85rem;
   }
   
@@ -953,6 +969,8 @@ button.sound-off {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   animation: fadeIn 0.5s ease-out;
+  width: 100%;
+  overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
 .wager-instructions {
