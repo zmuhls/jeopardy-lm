@@ -52,11 +52,6 @@ JeopardyLM is an interactive, customizable Jeopardy-style game built with Next.j
 
 ## Troubleshooting
 
-### Sound Effects Issues
-- Sound effects may not work in some browsers due to autoplay restrictions
-- Click anywhere on the screen first to enable sound playback
-- Use the sound toggle to manually enable/disable sound effects
-
 ### API Integration
 - Ensure you have valid API keys for your chosen AI provider
 - API keys are stored locally in browser storage only
