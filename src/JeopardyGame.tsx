@@ -654,12 +654,13 @@ export default function JeopardyGame() {
         // Simple prompt for debugging
         `Return a simple Jeopardy question in JSON format like this: {"categories":[{"title":"Test","questions":[{"text":"Test question","answer":"What is test?","value":200}]}]}` :
         // Regular full prompt
-        `Create a new Jeopardy game board with ${categories.length} creative categories.
+        `Create a new Jeopardy game board with EXACTLY 6 creative categories.
         ${referenceText ? `Use the following reference content for creating specialized categories and questions: ${referenceText}` : ''}
         
         For each category, create 5 clues with values from $200 to $1000, ensuring they increase in difficulty.
         
         Important:
+        - YOU MUST CREATE EXACTLY 6 CATEGORIES, no more and no less
         - Create entirely new category titles that are clever and engaging
         - Clues should be statements or facts, NOT questions
         - Responses should always start with "What is" or "Who is" etc.
@@ -683,9 +684,11 @@ export default function JeopardyGame() {
                 ... and so on for values 400, 600, 800, 1000
               ]
             },
-            ... repeat for all ${categories.length} categories
+            ... repeat for exactly 6 categories, numbered from 0 to 5
           ]
-        }`;
+        }
+        
+        IMPORTANT: The response MUST include EXACTLY 6 categories in the "categories" array.`;
       
       // API endpoints for different providers
       const apiEndpoints = {
@@ -1058,7 +1061,7 @@ export default function JeopardyGame() {
           }
           
           // Format the generated content to match our game state structure
-          const formattedCategories = parsedData.categories.map((cat: any) => ({
+          let formattedCategories = parsedData.categories.map((cat: any) => ({
             title: cat.title,
             questions: cat.questions.map((q: any) => ({
               text: q.text,
@@ -1069,6 +1072,29 @@ export default function JeopardyGame() {
               dailyDouble: q.dailyDouble === true
             }))
           }));
+          
+          // Ensure we always have exactly 6 categories
+          if (formattedCategories.length < 6) {
+            console.log(`API returned only ${formattedCategories.length} categories instead of 6. Adding missing categories.`);
+            
+            // Calculate how many categories we need to add
+            const missingCategoriesCount = 6 - formattedCategories.length;
+            
+            // Generate placeholder categories for the missing ones
+            const placeholderCategories = defaultCategories
+              .slice(0, missingCategoriesCount)
+              .map(title => ({
+                title: `${title} (Generated)`,
+                questions: defaultValues.map(createDefaultQuestions)
+              }));
+            
+            // Append the placeholder categories
+            formattedCategories = [...formattedCategories, ...placeholderCategories];
+          } else if (formattedCategories.length > 6) {
+            console.log(`API returned ${formattedCategories.length} categories instead of 6. Trimming to 6 categories.`);
+            // Trim to exactly 6 categories if we got more
+            formattedCategories = formattedCategories.slice(0, 6);
+          }
           
           // Update game state with new questions
           setGameState({
