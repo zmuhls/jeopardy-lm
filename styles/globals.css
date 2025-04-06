@@ -231,6 +231,26 @@ button.sound-off {
   opacity: 0.9;
 }
 
+/* Daily Double styles */
+.question-cell.daily-double {
+  background-color: var(--jeopardy-dark-blue);
+  border: 2px solid var(--jeopardy-gold);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.daily-double-indicator {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: var(--jeopardy-gold);
+  color: var(--jeopardy-blue);
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0.9;
+}
+
 /* Question View */
 .question-view {
   position: fixed;
@@ -548,6 +568,30 @@ button.sound-off {
   color: #ccc;
   margin-top: 2px;
   font-style: italic;
+}
+
+.daily-double-toggle {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  background-color: var(--jeopardy-dark-blue);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--jeopardy-gold);
+}
+
+.daily-double-toggle input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-right: 0.75rem;
+  accent-color: var(--jeopardy-gold);
+}
+
+.daily-double-toggle label {
+  color: var(--jeopardy-gold);
+  font-weight: bold;
+  margin-bottom: 0;
+  cursor: pointer;
 }
 
 .form-group input,
