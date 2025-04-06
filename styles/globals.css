@@ -236,6 +236,12 @@ button.sound-off {
   background-color: var(--jeopardy-dark-blue);
   border: 2px solid var(--jeopardy-gold);
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  animation: subtle-pulse 2s infinite alternate;
+}
+
+@keyframes subtle-pulse {
+  from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+  to { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
 }
 
 .daily-double-indicator {
@@ -636,6 +642,99 @@ button.sound-off {
   margin-top: 30px;
 }
 
+/* Save/Load controls */
+.save-load-controls {
+  display: flex;
+  gap: 8px;
+  margin: 5px 0;
+}
+
+.save-button, .load-button {
+  padding: 8px 15px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.save-button {
+  background-color: #2e7d32;
+  border-color: #81c784;
+}
+
+.load-button {
+  background-color: #1565c0;
+  border-color: #64b5f6;
+}
+
+/* Saved boards list styles */
+.saved-boards-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 15px 0;
+  padding-right: 10px;
+}
+
+.saved-board-item {
+  background-color: var(--jeopardy-dark-blue);
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 2px solid transparent;
+}
+
+.saved-board-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--jeopardy-gold);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.saved-board-info {
+  flex: 1;
+}
+
+.saved-board-info h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+  color: var(--jeopardy-gold);
+}
+
+.saved-date {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.delete-board-button {
+  background: none;
+  border: none;
+  color: #f44336;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+  margin: 0;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.delete-board-button:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.no-saved-boards {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
 /* Final Jeopardy */
 .final-jeopardy {
   text-align: center;
@@ -845,6 +944,108 @@ button.sound-off {
   color: white;
   font-weight: bold;
   margin-top: 10px;
+}
+
+/* Daily Double Wager Screen */
+.daily-double-wager {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.wager-instructions {
+  color: white;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+}
+
+.wager-info {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 15px;
+}
+
+.wager-info p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 5px 0;
+}
+
+.wager-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.wager-input {
+  width: 200px;
+  padding: 10px;
+  font-size: 1.2rem;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--jeopardy-gold);
+  border-radius: 4px;
+  color: white;
+}
+
+.wager-button {
+  width: 200px;
+  padding: 12px;
+  font-size: 1.1rem;
+  background-color: var(--jeopardy-gold);
+  color: var(--jeopardy-dark-blue);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.wager-button:hover {
+  transform: translateY(-2px);
+  background-color: #ffe54c;
+}
+
+.wager-button:active {
+  transform: translateY(0);
+}
+
+/* Daily Double Question Screen */
+.daily-double-question {
+  margin-bottom: 20px;
+}
+
+.daily-double-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.daily-double-header h2 {
+  color: var(--jeopardy-gold);
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.wager-display {
+  background-color: var(--jeopardy-gold);
+  color: var(--jeopardy-dark-blue);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  animation: pulseWager 1.5s infinite alternate;
+}
+
+@keyframes pulseWager {
+  from { background-color: var(--jeopardy-gold); }
+  to { background-color: #ffe54c; }
 }
 
 @keyframes pulseBorder {

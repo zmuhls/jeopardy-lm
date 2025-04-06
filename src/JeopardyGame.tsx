@@ -110,6 +110,14 @@ export default function JeopardyGame() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundNotification, setSoundNotification] = useState<string | null>(null);
   const [incorrectPlayers, setIncorrectPlayers] = useState<IncorrectPlayers>({});
+  const [dailyDoubleWager, setDailyDoubleWager] = useState<number | null>(null);
+  const [showDailyDoubleWager, setShowDailyDoubleWager] = useState(false);
+  
+  // Save/Load functionality
+  const [savedBoards, setSavedBoards] = useState<{name: string, date: string, data: GameState}[]>([]);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [saveBoardName, setSaveBoardName] = useState('');
   
   // Board editing state
   const [showEditor, setShowEditor] = useState(false);
@@ -134,7 +142,7 @@ export default function JeopardyGame() {
   const themeMusic = useRef<HTMLAudioElement | null>(null);
   const revealSound = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize audio elements
+  // Initialize audio elements and load saved data
   useEffect(() => {
     // Handle sound initialization in a try-catch to prevent errors
     try {
@@ -205,6 +213,23 @@ export default function JeopardyGame() {
       if (savedSoundSetting !== null) {
         setSoundEnabled(savedSoundSetting === 'true');
       }
+      
+      // Load saved boards from localStorage
+      const savedBoardsData = localStorage.getItem('jeopardy_saved_boards');
+      if (savedBoardsData) {
+        try {
+          const parsedBoards = JSON.parse(savedBoardsData);
+          setSavedBoards(parsedBoards);
+        } catch (e) {
+          console.error("Error parsing saved boards:", e);
+        }
+      }
+      
+      // Load theme preference
+      const savedTheme = localStorage.getItem('jeopardy_theme');
+      if (savedTheme) {
+        setGameTheme(savedTheme);
+      }
     } catch (error) {
       console.error("Error initializing audio:", error);
     }
@@ -227,6 +252,20 @@ export default function JeopardyGame() {
       localStorage.setItem('jeopardy_sound_enabled', soundEnabled.toString());
     }
   }, [soundEnabled]);
+  
+  // Save theme preference to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('jeopardy_theme', gameTheme);
+    }
+  }, [gameTheme]);
+  
+  // Save boards to localStorage whenever savedBoards changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && savedBoards.length > 0) {
+      localStorage.setItem('jeopardy_saved_boards', JSON.stringify(savedBoards));
+    }
+  }, [savedBoards]);
   
   // Dummy sound function that only logs - to prevent errors
   const playSound = (type: 'correct' | 'incorrect' | 'theme' | 'reveal') => {
@@ -260,16 +299,45 @@ export default function JeopardyGame() {
       categories: updatedCategories
     });
     
-    // Play appropriate sound based on whether it's a Daily Double
+    // Handle Daily Double differently
     if (question.dailyDouble) {
-      // For Daily Double, we would play a special sound
-      // In a production environment, you would add a daily double sound file
+      // Show wager screen instead of question immediately
+      setDailyDoubleWager(null);
+      setShowDailyDoubleWager(true);
+      
+      // For Daily Double, we play a special sound
       console.log("Daily Double sound would play here!");
       playSound('reveal'); // Use reveal sound as a substitute
     } else {
-      // Play normal theme music for regular questions
+      // For regular questions, show question directly and play theme music
+      setShowDailyDoubleWager(false);
       playSound('theme');
     }
+  };
+  
+  // Handle Daily Double wager submission
+  const handleDailyDoubleWager = (wager: number) => {
+    if (!selectedQuestion) return;
+    
+    // Validate wager
+    const { categoryIndex, questionIndex } = selectedQuestion;
+    const question = gameState.categories[categoryIndex].questions[questionIndex];
+    const playerScore = gameState.players[gameState.currentPlayer].score;
+    
+    // Maximum wager is either player's score or 1000, whichever is greater
+    const maxWager = Math.max(playerScore, 1000);
+    
+    // Ensure wager is valid
+    let finalWager = wager;
+    if (wager < 5) finalWager = 5; // Minimum wager
+    if (wager > maxWager) finalWager = maxWager; // Maximum wager
+    
+    // Set the wager and show the question
+    setDailyDoubleWager(finalWager);
+    setShowDailyDoubleWager(false);
+    
+    // Play theme music for the actual question
+    playSound('theme');
   };
 
   // Toggle incorrect player selection
@@ -288,7 +356,12 @@ export default function JeopardyGame() {
     console.log('Would stop theme music here');
     
     const { categoryIndex, questionIndex } = selectedQuestion;
-    const questionValue = gameState.categories[categoryIndex].questions[questionIndex].value;
+    let questionValue = gameState.categories[categoryIndex].questions[questionIndex].value;
+    
+    // If this is a Daily Double, use the wager instead of the standard value
+    if (gameState.categories[categoryIndex].questions[questionIndex].dailyDouble && dailyDoubleWager !== null) {
+      questionValue = dailyDoubleWager;
+    }
     
     // Play sound based on answer
     playSound(correct ? 'correct' : 'incorrect');
@@ -321,9 +394,11 @@ export default function JeopardyGame() {
       currentPlayer: nextPlayerIndex
     });
     
-    // Close the question view
+    // Close the question view and reset Daily Double state
     setSelectedQuestion(null);
     setShowAnswer(false);
+    setDailyDoubleWager(null);
+    setShowDailyDoubleWager(false);
   };
   
   // Handle deducting points from multiple players
@@ -331,7 +406,12 @@ export default function JeopardyGame() {
     if (!selectedQuestion) return;
     
     const { categoryIndex, questionIndex } = selectedQuestion;
-    const questionValue = gameState.categories[categoryIndex].questions[questionIndex].value;
+    let questionValue = gameState.categories[categoryIndex].questions[questionIndex].value;
+    
+    // If this is a Daily Double, use the wager instead of the standard value
+    if (gameState.categories[categoryIndex].questions[questionIndex].dailyDouble && dailyDoubleWager !== null) {
+      questionValue = dailyDoubleWager;
+    }
     
     // Play incorrect sound
     playSound('incorrect');
@@ -363,9 +443,11 @@ export default function JeopardyGame() {
     // Reset incorrect players state
     setIncorrectPlayers({});
     
-    // Close the question view
+    // Close the question view and reset Daily Double state
     setSelectedQuestion(null);
     setShowAnswer(false);
+    setDailyDoubleWager(null);
+    setShowDailyDoubleWager(false);
   };
   
   // Handle editing a category title
@@ -803,9 +885,7 @@ export default function JeopardyGame() {
           }
           
           // Extract the JSON object from the response text
-          // Use a more precise regex to extract valid JSON objects
-          // This looks for an opening brace and finds the matching closing brace
-          // considering nested braces and ignoring braces in strings
+          // Using more robust JSON extraction techniques
           let jsonMatch;
           
           try {
@@ -815,21 +895,32 @@ export default function JeopardyGame() {
               jsonMatch = [codeBlockMatch[1]];
               console.log("Found JSON in code block");
             } else {
-              // Second try: find the largest valid JSON object
-              const braceMatches = jsonContent.match(/\{[\s\S]*?\}/g);
-              if (braceMatches) {
+              // Second try: use a more sophisticated regex to find balanced JSON objects
+              // This helps with nested braces by counting opening and closing braces
+              const jsonRegex = /(\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\}))*\})/g;
+              const balancedMatches = jsonContent.match(jsonRegex);
+              
+              if (balancedMatches && balancedMatches.length > 0) {
                 // Sort by length and take the longest, which is likely the full response
-                jsonMatch = [braceMatches.sort((a, b) => b.length - a.length)[0]];
-                console.log("Found JSON by brace matching");
+                jsonMatch = [balancedMatches.sort((a, b) => b.length - a.length)[0]];
+                console.log("Found JSON with balanced brace matching");
               } else {
-                // Fallback to the original approach
-                jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
-                console.log("Using fallback JSON extraction");
+                // Third try: find all JSON-like structures
+                const braceMatches = jsonContent.match(/\{[\s\S]*?\}/g);
+                if (braceMatches) {
+                  // Sort by length and take the longest, which is likely the full response
+                  jsonMatch = [braceMatches.sort((a, b) => b.length - a.length)[0]];
+                  console.log("Found JSON by simple brace matching");
+                } else {
+                  // Last resort: try to find any JSON-like structure
+                  jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
+                  console.log("Using fallback JSON extraction");
+                }
               }
             }
           } catch (error) {
             console.error("Error in JSON extraction:", error);
-            // Fallback to original approach
+            // Fallback to simplest approach
             jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
           }
           
@@ -838,64 +929,132 @@ export default function JeopardyGame() {
             throw new Error("Could not find valid JSON in the response");
           }
           
-          // Sanitize the JSON string by removing control characters
-          // JSON.parse fails on strings with control characters like \n, \t, etc.
-          // Sanitize the JSON - first remove all control characters
-          let sanitizedJson = jsonMatch[0].replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+          // Enhanced JSON sanitization
+          let sanitizedJson = jsonMatch[0];
           
-          // Specifically target line 13 column 62 which was mentioned in the error
-          // This is a common issue with LLM-generated JSON having unescaped control chars in string literals
+          // Multi-stage sanitization process
           try {
+            // Stage 1: Remove control characters that break JSON parsing
+            sanitizedJson = sanitizedJson.replace(/[\u0000-\u001F\u007F-\u009F]/g, " ");
+            
+            // Stage 2: Fix escape sequences inside string literals
+            sanitizedJson = sanitizedJson.replace(/"(?:[^"\\]|\\.)*"/g, function(match) {
+              return match
+                .replace(/\\(?!["\\/bfnrt])/g, "\\\\") // Escape backslashes
+                .replace(/\n/g, "\\n")               // Escape newlines
+                .replace(/\r/g, "\\r")               // Escape carriage returns
+                .replace(/\t/g, "\\t")               // Escape tabs
+                .replace(/\f/g, "\\f");              // Escape form feeds
+            });
+            
+            // Stage 3: Fix common JSON structure issues
+            sanitizedJson = sanitizedJson
+              .replace(/,\s*}/g, '}')                // Remove trailing commas in objects
+              .replace(/,\s*\]/g, ']')               // Remove trailing commas in arrays
+              .replace(/"\s+"/g, '" "')              // Fix spaces between quotes
+              .replace(/"\{/g, '{')                  // Fix issues with "{" patterns
+              .replace(/\}"/g, '}')                  // Fix issues with "}" patterns
+              .replace(/"\[/g, '[')                  // Fix issues with "[" patterns
+              .replace(/\]"/g, ']');                 // Fix issues with "]" patterns
+            
+            // Stage 4: Special handling for line 13 which was mentioned in the error
             const jsonLines = sanitizedJson.split('\n');
             if (jsonLines.length >= 13) {
-              // Find any control characters in string literals and escape them
               jsonLines[12] = jsonLines[12].replace(/(".*?)([\u0000-\u001F])(.+?")/g, '$1\\$2$3');
               sanitizedJson = jsonLines.join('\n');
             }
+            
+            // Stage 5: Ensure valid JSON escaping in string values
+            // This regex finds string literals and ensures they don't contain invalid escapes
+            sanitizedJson = sanitizedJson.replace(/"(?:[^"\\]|\\["\\bfnrt])*"/g, function(match) {
+              // Replace any invalid escape sequences
+              return match.replace(/\\([^"\\bfnrt/])/g, '\\\\$1');
+            });
+            
           } catch (e) {
-            console.error("Error trying to fix specific line:", e);
+            console.error("Error during JSON sanitization:", e);
           }
           
+          // Attempt to parse with progressively more aggressive sanitization
           let parsedData;
+          let parsingSuccess = false;
+          
+          // First attempt: Try parsing the sanitized JSON
           try {
             parsedData = JSON.parse(sanitizedJson);
+            parsingSuccess = true;
+            console.log("Successfully parsed JSON on first attempt");
           } catch (jsonError) {
-            console.error("JSON parsing error:", jsonError);
+            console.error("Initial JSON parsing error:", jsonError);
             console.log("Attempting more aggressive JSON cleaning...");
             
-            // If that fails, try a more aggressive approach
+            // Second attempt: More aggressive cleaning
             try {
-              // Try to manually extract and fix JSON structure
-              const fixedJson = sanitizedJson
+              // Use a string parser approach that manually reconstructs the JSON
+              const aggressive1 = sanitizedJson
                 .replace(/\\(?!["\\/bfnrt])/g, "\\\\") // Escape backslashes
-                .replace(/[\n\r\t]/g, " ")            // Replace newlines and tabs with spaces
+                .replace(/[\n\r\t\f]/g, " ")          // Replace whitespace with spaces
                 .replace(/"\s+"/g, '" "')             // Fix spaces between quotes
                 .replace(/([^\\])"/g, '$1\\"')        // Escape unescaped quotes
                 .replace(/\\\\"/g, '\\"')             // Fix double escaped quotes
-                .replace(/"{/g, '{')                  // Fix issues with "{" patterns
-                .replace(/}"/g, '}');                 // Fix issues with "}" patterns
+                .replace(/\\"/g, '\\"');              // Ensure quote escaping
               
-              // Final parse attempt
-              parsedData = JSON.parse(fixedJson);
-            } catch (finalError) {
-              console.error("Failed to parse JSON after cleanup:", finalError);
+              // Try to parse again
+              parsedData = JSON.parse(aggressive1);
+              parsingSuccess = true;
+              console.log("Successfully parsed JSON on second attempt");
+            } catch (secondError) {
+              console.error("Second parsing attempt failed:", secondError);
               
-              // As a last resort, create a simple mock response
-              console.log("Creating mock data as fallback");
-              parsedData = {
-                categories: defaultCategories.map((title, i) => ({
-                  title: `${title} (AI Error)`,
-                  questions: defaultValues.map((value, j) => ({
-                    text: `JSON parse error occurred. This is a fallback question ${j+1} for ${value} points.`,
-                    answer: "What is a JSON parsing error?",
-                    value: value,
-                    revealed: false,
-                    answered: false,
-                    dailyDouble: false
-                  }))
-                }))
-              };
+              // Third attempt: Try to extract valid partial JSON
+              try {
+                // Extract only the categories array which is the essential part
+                const categoryMatch = sanitizedJson.match(/"categories"\s*:\s*(\[[\s\S]*?\])/);
+                if (categoryMatch) {
+                  const categoriesJson = `{"categories":${categoryMatch[1]}}`;
+                  parsedData = JSON.parse(categoriesJson);
+                  parsingSuccess = true;
+                  console.log("Successfully parsed partial JSON (categories only)");
+                } else {
+                  throw new Error("Couldn't find categories array");
+                }
+              } catch (thirdError) {
+                console.error("Third parsing attempt failed:", thirdError);
+                
+                // Fourth attempt: Last resort with hand-crafted JSON fix
+                try {
+                  // This replaces all problematic quotes within string values
+                  const fixedJson = sanitizedJson
+                    .replace(/("[^"]*)(")([^"]*")/g, '$1\\"$3') // Fix quotes inside strings
+                    .replace(/([\[\{,]\s*)([^,\{\[\]\"\d-])/g, '$1"$2') // Add quotes around keys
+                    .replace(/([^\s\]\}"])(\s*[\]\},])/g, '$1"$2'); // Close quoted values
+                  
+                  parsedData = JSON.parse(fixedJson);
+                  parsingSuccess = true;
+                  console.log("Successfully parsed JSON on fourth attempt");
+                } catch (finalError) {
+                  console.error("Final parsing attempt failed:", finalError);
+                }
+              }
             }
+          }
+          
+          // If all parsing attempts failed, use fallback data
+          if (!parsingSuccess) {
+            console.log("Creating mock data as fallback");
+            parsedData = {
+              categories: defaultCategories.map((title, i) => ({
+                title: `${title} (AI Error)`,
+                questions: defaultValues.map((value, j) => ({
+                  text: `JSON parse error occurred. This is a fallback question ${j+1} for ${value} points.`,
+                  answer: "What is a JSON parsing error?",
+                  value: value,
+                  revealed: false,
+                  answered: false,
+                  dailyDouble: false
+                }))
+              }))
+            };
           }
           
           // Format the generated content to match our game state structure
@@ -1011,6 +1170,53 @@ export default function JeopardyGame() {
     }
   };
   
+  // Save current game state
+  const saveCurrentGame = () => {
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleString();
+    
+    if (!saveBoardName) {
+      setSaveBoardName(`Jeopardy Board ${formattedDate}`);
+    }
+    
+    const newSavedGame = {
+      name: saveBoardName || `Jeopardy Board ${formattedDate}`,
+      date: formattedDate,
+      data: { ...gameState }
+    };
+    
+    setSavedBoards(prev => [...prev, newSavedGame]);
+    setShowSaveModal(false);
+    setSaveBoardName('');
+    
+    // Show notification
+    alert(`Game saved as "${newSavedGame.name}"`);
+  };
+  
+  // Load a saved game
+  const loadGame = (index: number) => {
+    if (index >= 0 && index < savedBoards.length) {
+      const savedGame = savedBoards[index];
+      
+      if (window.confirm(`Load "${savedGame.name}"? Current game progress will be lost.`)) {
+        setGameState(savedGame.data);
+        setSelectedQuestion(null);
+        setShowAnswer(false);
+        setShowLoadModal(false);
+      }
+    }
+  };
+  
+  // Delete a saved game
+  const deleteSavedGame = (index: number, event: React.MouseEvent) => {
+    // Stop the click from bubbling up to the parent (which would load the game)
+    event.stopPropagation();
+    
+    if (window.confirm(`Delete "${savedBoards[index].name}"? This cannot be undone.`)) {
+      setSavedBoards(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+  
   // Open player settings
   const openPlayerSettings = () => {
     setEditingPlayers([...gameState.players]); // Copy current players for editing
@@ -1098,6 +1304,17 @@ export default function JeopardyGame() {
           <button onClick={activateFinalJeopardy} disabled={gameState.finalJeopardyActive}>
             Final Jeopardy
           </button>
+          
+          {/* Save/Load Controls */}
+          <div className="save-load-controls">
+            <button className="save-button" onClick={() => setShowSaveModal(true)}>
+              💾 Save Board
+            </button>
+            <button className="load-button" onClick={() => setShowLoadModal(true)}>
+              📂 Load Board ({savedBoards.length})
+            </button>
+          </div>
+          
           <button 
             onClick={() => {
               // Toggle sound state
@@ -1221,7 +1438,7 @@ export default function JeopardyGame() {
                   return (
                     <div 
                       key={`${categoryIndex}-${questionIndex}`} 
-                      className={`question-cell ${question.answered ? 'answered' : ''} ${showEditor ? 'editable' : ''} ${question.dailyDouble ? 'daily-double' : ''}`}
+                      className={`question-cell ${question.answered ? 'answered' : ''} ${showEditor ? 'editable' : ''} ${question.dailyDouble && question.revealed ? 'daily-double' : ''}`}
                       onClick={() => {
                         if (showEditor) {
                           handleEditQuestion(categoryIndex, questionIndex);
@@ -1233,7 +1450,7 @@ export default function JeopardyGame() {
                       {question.answered && !showEditor ? '' : (
                         <>
                           {`$${question.value}`}
-                          {/* Daily Double indicator only shown in editor mode */}
+                          {/* Daily Double indicator only shown in editor mode or after it's been revealed */}
                           {question.dailyDouble && !question.answered && showEditor && (
                             <div className="daily-double-indicator">DD</div>
                           )}
@@ -1254,113 +1471,162 @@ export default function JeopardyGame() {
         {selectedQuestion && (
           <div className="question-view">
             <div className="question-content">
-              {gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].dailyDouble ? (
+              {/* Daily Double Wager Screen */}
+              {gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].dailyDouble && showDailyDoubleWager ? (
                 <div className="daily-double-reveal">
                   <h2>Daily Double!</h2>
                   <div className="daily-double-animation"></div>
-                  <p className="daily-double-value">${gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].value}</p>
-                </div>
-              ) : (
-                <h2>${gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].value}</h2>
-              )}
-              <p className="question-text">
-                {gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].text}
-              </p>
-              
-              {showAnswer && (
-                <div className="answer">
-                  <h3>Correct Response:</h3>
-                  <p className="correct-response">{gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].answer}</p>
-                </div>
-              )}
-              
-              <div className="question-controls">
-                <button onClick={toggleShowAnswer}>
-                  {showAnswer ? 'Hide Response' : 'Show Response'}
-                </button>
-                
-                {showAnswer ? (
-                  <div className="player-selection">
-                    <h4>Award Points To:</h4>
-                    <div className="player-answer-buttons">
-                      {gameState.players.map((player, idx) => (
-                        <div key={idx} className="player-answer-option">
-                          <div className="player-name">{player.name}</div>
-                          <div className="answer-buttons">
-                            <button 
-                              className="correct-button" 
-                              onClick={() => handleAnswer(true, idx)}
-                            >
-                              Correct
-                            </button>
-                            <button 
-                              className="incorrect-button" 
-                              onClick={() => handleAnswer(false, idx)}
-                            >
-                              Incorrect
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                  
+                  <div className="daily-double-wager">
+                    <p className="wager-instructions">
+                      {gameState.players[gameState.currentPlayer].name}, enter your wager:
+                    </p>
+                    
+                    <div className="wager-info">
+                      <p>Current score: ${gameState.players[gameState.currentPlayer].score}</p>
+                      <p>Maximum wager: ${Math.max(gameState.players[gameState.currentPlayer].score, 1000)}</p>
                     </div>
                     
-                    <div className="multi-deduction">
-                      <h4>Deduct From Multiple Players</h4>
-                      <div className="player-checkboxes">
-                        {gameState.players.map((player, idx) => (
-                          <div 
-                            key={idx} 
-                            className="player-checkbox"
-                            onClick={() => toggleIncorrectPlayer(idx)}
-                          >
-                            <input
-                              type="checkbox"
-                              id={`incorrect-${idx}`}
-                              checked={!!incorrectPlayers[idx]}
-                              onChange={() => {}} // Handler moved to parent div for better UX
-                            />
-                            <label htmlFor={`incorrect-${idx}`}>{player.name}</label>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        className="deduct-multiple-button"
-                        onClick={handleMultipleIncorrect}
-                        disabled={Object.keys(incorrectPlayers).length === 0}
-                      >
-                        {Object.keys(incorrectPlayers).length > 0 
-                          ? `Deduct Points from ${Object.keys(incorrectPlayers).length} Player${Object.keys(incorrectPlayers).length > 1 ? 's' : ''}`
-                          : 'Select Players to Deduct Points'}
-                      </button>
-                    </div>
-                    
-                    <div className="back-option">
+                    <div className="wager-input-container">
+                      <input 
+                        type="number" 
+                        className="wager-input"
+                        placeholder="Enter wager"
+                        min={5}
+                        max={Math.max(gameState.players[gameState.currentPlayer].score, 1000)}
+                        onChange={(e) => setDailyDoubleWager(parseInt(e.target.value) || 0)}
+                      />
                       <button 
-                        className="back-button"
-                        onClick={() => {
-                          // Mark the question as answered even with no points
-                          if (selectedQuestion) {
-                            const { categoryIndex, questionIndex } = selectedQuestion;
-                            const updatedCategories = [...gameState.categories];
-                            updatedCategories[categoryIndex].questions[questionIndex].answered = true;
-                            
-                            setGameState({
-                              ...gameState,
-                              categories: updatedCategories
-                            });
-                          }
-                          
-                          // Close the question view
-                          setSelectedQuestion(null);
-                          setShowAnswer(false);
-                        }}
+                        className="wager-button"
+                        onClick={() => handleDailyDoubleWager(dailyDoubleWager || gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].value)}
                       >
-                        Return to Board (No Points)
+                        Confirm Wager
                       </button>
                     </div>
                   </div>
-                ) : null}
-              </div>
+                </div>
+              ) : (
+                <>
+                  {/* Daily Double Question Display (after wager is made) */}
+                  {gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].dailyDouble && !showDailyDoubleWager ? (
+                    <div className="daily-double-question">
+                      <div className="daily-double-header">
+                        <h2>Daily Double</h2>
+                        <p className="wager-display">Wager: ${dailyDoubleWager}</p>
+                      </div>
+                      <p className="question-text">
+                        {gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].text}
+                      </p>
+                    </div>
+                  ) : (
+                    // Regular Question Display
+                    <>
+                      <h2>${gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].value}</h2>
+                      <p className="question-text">
+                        {gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].text}
+                      </p>
+                    </>
+                  )}
+                  
+                  {/* Answer Display (for both regular and daily double) */}
+                  {showAnswer && (
+                    <div className="answer">
+                      <h3>Correct Response:</h3>
+                      <p className="correct-response">{gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].answer}</p>
+                    </div>
+                  )}
+                  
+                  <div className="question-controls">
+                    <button onClick={toggleShowAnswer}>
+                      {showAnswer ? 'Hide Response' : 'Show Response'}
+                    </button>
+                    
+                    {showAnswer ? (
+                      <div className="player-selection">
+                        <h4>Award Points To:</h4>
+                        <div className="player-answer-buttons">
+                          {gameState.players.map((player, idx) => (
+                            <div key={idx} className="player-answer-option">
+                              <div className="player-name">{player.name}</div>
+                              <div className="answer-buttons">
+                                <button 
+                                  className="correct-button" 
+                                  onClick={() => handleAnswer(true, idx)}
+                                >
+                                  Correct
+                                </button>
+                                <button 
+                                  className="incorrect-button" 
+                                  onClick={() => handleAnswer(false, idx)}
+                                >
+                                  Incorrect
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="multi-deduction">
+                          <h4>Deduct From Multiple Players</h4>
+                          <div className="player-checkboxes">
+                            {gameState.players.map((player, idx) => (
+                              <div 
+                                key={idx} 
+                                className="player-checkbox"
+                                onClick={() => toggleIncorrectPlayer(idx)}
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`incorrect-${idx}`}
+                                  checked={!!incorrectPlayers[idx]}
+                                  onChange={() => {}} // Handler moved to parent div for better UX
+                                />
+                                <label htmlFor={`incorrect-${idx}`}>{player.name}</label>
+                              </div>
+                            ))}
+                          </div>
+                          <button
+                            className="deduct-multiple-button"
+                            onClick={handleMultipleIncorrect}
+                            disabled={Object.keys(incorrectPlayers).length === 0}
+                          >
+                            {Object.keys(incorrectPlayers).length > 0 
+                              ? `Deduct Points from ${Object.keys(incorrectPlayers).length} Player${Object.keys(incorrectPlayers).length > 1 ? 's' : ''}`
+                              : 'Select Players to Deduct Points'}
+                          </button>
+                        </div>
+                        
+                        <div className="back-option">
+                          <button 
+                            className="back-button"
+                            onClick={() => {
+                              // Mark the question as answered even with no points
+                              if (selectedQuestion) {
+                                const { categoryIndex, questionIndex } = selectedQuestion;
+                                const updatedCategories = [...gameState.categories];
+                                updatedCategories[categoryIndex].questions[questionIndex].answered = true;
+                                
+                                setGameState({
+                                  ...gameState,
+                                  categories: updatedCategories
+                                });
+                              }
+                              
+                              // Close the question view
+                              setSelectedQuestion(null);
+                              setShowAnswer(false);
+                              setDailyDoubleWager(null);
+                              setShowDailyDoubleWager(false);
+                            }}
+                          >
+                            Return to Board (No Points)
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -1378,6 +1644,65 @@ export default function JeopardyGame() {
           </div>
         ))}
       </div>
+      
+      {/* Save Game Modal */}
+      {showSaveModal && (
+        <div className="settings-modal">
+          <div className="settings-content">
+            <h2>Save Game Board</h2>
+            <div className="form-group">
+              <label>Save Name:</label>
+              <input 
+                type="text" 
+                value={saveBoardName} 
+                onChange={(e) => setSaveBoardName(e.target.value)} 
+                placeholder="My Custom Jeopardy Board"
+                autoFocus
+              />
+            </div>
+            <div className="button-group">
+              <button onClick={saveCurrentGame}>Save</button>
+              <button onClick={() => setShowSaveModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Load Game Modal */}
+      {showLoadModal && (
+        <div className="settings-modal">
+          <div className="settings-content">
+            <h2>Load Saved Game</h2>
+            {savedBoards.length > 0 ? (
+              <div className="saved-boards-list">
+                {savedBoards.map((board, index) => (
+                  <div 
+                    key={index} 
+                    className="saved-board-item"
+                    onClick={() => loadGame(index)}
+                  >
+                    <div className="saved-board-info">
+                      <h3>{board.name}</h3>
+                      <p className="saved-date">Saved on: {board.date}</p>
+                    </div>
+                    <button 
+                      className="delete-board-button"
+                      onClick={(e) => deleteSavedGame(index, e)}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="no-saved-boards">No saved boards found.</p>
+            )}
+            <div className="button-group">
+              <button onClick={() => setShowLoadModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Category Editor Modal */}
       {editingCategory && (
         <div className="editor-modal">
