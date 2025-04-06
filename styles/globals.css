@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+  --jeopardy-blue: #0d47a1;
+  --jeopardy-dark-blue: #082b66;
+  --jeopardy-gold: #ffd700;
+  --category-bg: #1a237e;
+  --question-bg: #1565c0;
+  --answered-bg: #424242;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  font-family: 'Arial', sans-serif;
+}
+
+/* Enhanced button styles */
+button {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+button:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+button:hover:after {
+  opacity: 1;
+}
+
+/* Jeopardy board enhanced styles */
+.jeopardy-title {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.4);
+  letter-spacing: 2px;
+}
+
+.category-header {
+  border-bottom: 4px solid var(--jeopardy-gold);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s ease;
+}
+
+.question-tile {
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform-style: preserve-3d;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.question-tile:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.question-tile:active {
+  transform: translateY(0px) scale(0.96);
+}
+
+.answered-tile {
+  transform: rotateY(180deg);
+  opacity: 0.7;
+}
+
+.player-card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.active-player-card {
+  animation: pulseBorder 2s infinite;
+  box-shadow: 0 0 12px var(--jeopardy-gold);
+}
+
+@keyframes pulseBorder {
+  0% { border-color: var(--jeopardy-gold); }
+  50% { border-color: rgba(255, 215, 0, 0.5); }
+  100% { border-color: var(--jeopardy-gold); }
+}
+
+/* Score change animation */
+.score-change {
+  animation: scoreEffect 1.2s ease-out;
+}
+
+@keyframes scoreEffect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Question screen effects */
+.question-display {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  transform: translateY(0);
+  animation: questionEnter 0.5s ease-out;
+}
+
+@keyframes questionEnter {
+  from { 
+    transform: translateY(20px); 
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1;
+  }
+}
+
+.answer-reveal {
+  animation: answerReveal 0.8s ease-out;
+}
+
+@keyframes answerReveal {
+  0% { 
+    transform: scale(0.8); 
+    opacity: 0;
+  }
+  60% { 
+    transform: scale(1.05); 
+  }
+  100% { 
+    transform: scale(1); 
+    opacity: 1;
+  }
+}
+
+/* Timer effects */
+.timer-warning {
+  color: #ff9800;
+  animation: timerPulse 1s infinite;
+}
+
+@keyframes timerPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Sound control button effect */
+.sound-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.sound-button:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.8s;
+}
+
+.sound-button:active:before {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Add 3D perspective for board container */
+.board-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
