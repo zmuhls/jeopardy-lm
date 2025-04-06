@@ -667,7 +667,8 @@ export default function JeopardyGame() {
         - Do not include the answer within the clue text
         - Make sure clues don't give away the answer directly
         - Include a balanced mix of topics and difficulty levels
-        - Mark 2 random clues as "dailyDouble: true" (these are special high-value clues)
+        - Mark EXACTLY 2 clues total as "dailyDouble: true" (these are special high-value clues)
+        - Do not add more than 2 Daily Doubles in total across all categories
         
         Format your response as JSON with this exact structure:
         {
@@ -688,7 +689,9 @@ export default function JeopardyGame() {
           ]
         }
         
-        IMPORTANT: The response MUST include EXACTLY 6 categories in the "categories" array.`;
+        IMPORTANT REQUIREMENTS:
+        1. The response MUST include EXACTLY 6 categories in the "categories" array.
+        2. There MUST be EXACTLY 2 questions total marked as dailyDouble: true across all categories.`;
       
       // API endpoints for different providers
       const apiEndpoints = {
@@ -1094,6 +1097,64 @@ export default function JeopardyGame() {
             console.log(`API returned ${formattedCategories.length} categories instead of 6. Trimming to 6 categories.`);
             // Trim to exactly 6 categories if we got more
             formattedCategories = formattedCategories.slice(0, 6);
+          }
+          
+          // Ensure we have EXACTLY 2 Daily Doubles on the board
+          // First, count how many Daily Doubles we currently have
+          let dailyDoubleCount = 0;
+          const allQuestions: {categoryIndex: number, questionIndex: number}[] = [];
+          
+          formattedCategories.forEach((category, categoryIndex) => {
+            category.questions.forEach((question, questionIndex) => {
+              if (question.dailyDouble) {
+                dailyDoubleCount++;
+              }
+              allQuestions.push({categoryIndex, questionIndex});
+            });
+          });
+          
+          console.log(`Board has ${dailyDoubleCount} Daily Doubles (target: 2)`);
+          
+          // If we have too many Daily Doubles, remove some randomly
+          if (dailyDoubleCount > 2) {
+            console.log(`Removing ${dailyDoubleCount - 2} excess Daily Doubles`);
+            
+            // Get all Daily Double positions
+            const dailyDoublePositions: {categoryIndex: number, questionIndex: number}[] = [];
+            formattedCategories.forEach((category, categoryIndex) => {
+              category.questions.forEach((question, questionIndex) => {
+                if (question.dailyDouble) {
+                  dailyDoublePositions.push({categoryIndex, questionIndex});
+                }
+              });
+            });
+            
+            // Shuffle array to randomize which ones to remove
+            dailyDoublePositions.sort(() => Math.random() - 0.5);
+            
+            // Remove excess Daily Doubles (keep only 2)
+            for (let i = 0; i < dailyDoublePositions.length - 2; i++) {
+              const {categoryIndex, questionIndex} = dailyDoublePositions[i];
+              formattedCategories[categoryIndex].questions[questionIndex].dailyDouble = false;
+            }
+          } 
+          // If we don't have enough Daily Doubles, add some randomly
+          else if (dailyDoubleCount < 2) {
+            console.log(`Adding ${2 - dailyDoubleCount} missing Daily Doubles`);
+            
+            // Shuffle all questions to randomize candidates
+            allQuestions.sort(() => Math.random() - 0.5);
+            
+            // Get non-Daily Double questions to potentially convert
+            const regularQuestions = allQuestions.filter(({categoryIndex, questionIndex}) => 
+              !formattedCategories[categoryIndex].questions[questionIndex].dailyDouble
+            );
+            
+            // Add missing Daily Doubles
+            for (let i = 0; i < 2 - dailyDoubleCount && i < regularQuestions.length; i++) {
+              const {categoryIndex, questionIndex} = regularQuestions[i];
+              formattedCategories[categoryIndex].questions[questionIndex].dailyDouble = true;
+            }
           }
           
           // Update game state with new questions
