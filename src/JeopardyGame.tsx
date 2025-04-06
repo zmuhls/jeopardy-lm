@@ -260,8 +260,16 @@ export default function JeopardyGame() {
       categories: updatedCategories
     });
     
-    // Play theme music when question is selected
-    playSound('theme');
+    // Play appropriate sound based on whether it's a Daily Double
+    if (question.dailyDouble) {
+      // For Daily Double, we would play a special sound
+      // In a production environment, you would add a daily double sound file
+      console.log("Daily Double sound would play here!");
+      playSound('reveal'); // Use reveal sound as a substitute
+    } else {
+      // Play normal theme music for regular questions
+      playSound('theme');
+    }
   };
 
   // Toggle incorrect player selection
@@ -1138,7 +1146,8 @@ export default function JeopardyGame() {
                       {question.answered && !showEditor ? '' : (
                         <>
                           {`$${question.value}`}
-                          {question.dailyDouble && !question.answered && (
+                          {/* Daily Double indicator only shown in editor mode */}
+                          {question.dailyDouble && !question.answered && showEditor && (
                             <div className="daily-double-indicator">DD</div>
                           )}
                         </>
@@ -1158,7 +1167,15 @@ export default function JeopardyGame() {
         {selectedQuestion && (
           <div className="question-view">
             <div className="question-content">
-              <h2>${gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].value}</h2>
+              {gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].dailyDouble ? (
+                <div className="daily-double-reveal">
+                  <h2>Daily Double!</h2>
+                  <div className="daily-double-animation"></div>
+                  <p className="daily-double-value">${gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].value}</p>
+                </div>
+              ) : (
+                <h2>${gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].value}</h2>
+              )}
               <p className="question-text">
                 {gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].text}
               </p>
