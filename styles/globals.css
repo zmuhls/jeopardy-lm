@@ -300,6 +300,95 @@ button.sound-off {
   justify-content: center;
 }
 
+/* Multiple player deduction styles */
+.multi-deduction {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  border-radius: 8px;
+  background-color: var(--jeopardy-dark-blue);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.multi-deduction h4 {
+  color: var(--jeopardy-gold);
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.player-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-bottom: 1.25rem;
+}
+
+.player-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  background-color: var(--category-bg);
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.player-checkbox:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.player-checkbox input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--jeopardy-gold);
+  cursor: pointer;
+}
+
+.player-checkbox label {
+  cursor: pointer;
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+.deduct-multiple-button {
+  background-color: #c62828;
+  color: white;
+  padding: 0.75rem 1rem;
+  border: 2px solid #ef9a9a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  margin-top: 0.75rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.deduct-multiple-button:hover:not(:disabled) {
+  background-color: #b71c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.deduct-multiple-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.deduct-multiple-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #6b6b6b;
+  border-color: #8f8f8f;
+}
+
 .back-button {
   background-color: #424242;
   border-color: #757575;
@@ -575,6 +664,26 @@ button.sound-off {
     width: 100%;
     margin-top: 10px;
     font-size: 0.85rem;
+  }
+  
+  /* Mobile styles for multi-deduction */
+  .multi-deduction {
+    margin-top: 1.5rem;
+    padding: 1rem;
+  }
+  
+  .player-checkboxes {
+    gap: 0.5rem;
+  }
+  
+  .player-checkbox {
+    padding: 0.4rem 0.6rem;
+    flex-basis: 45%;
+  }
+  
+  .deduct-multiple-button {
+    font-size: 0.95rem;
+    padding: 0.6rem 0.8rem;
   }
 }
 

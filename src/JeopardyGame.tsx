@@ -1183,15 +1183,19 @@ export default function JeopardyGame() {
                     </div>
                     
                     <div className="multi-deduction">
-                      <h4>Deduct From Multiple Players:</h4>
+                      <h4>Deduct From Multiple Players</h4>
                       <div className="player-checkboxes">
                         {gameState.players.map((player, idx) => (
-                          <div key={idx} className="player-checkbox">
+                          <div 
+                            key={idx} 
+                            className="player-checkbox"
+                            onClick={() => toggleIncorrectPlayer(idx)}
+                          >
                             <input
                               type="checkbox"
                               id={`incorrect-${idx}`}
                               checked={!!incorrectPlayers[idx]}
-                              onChange={() => toggleIncorrectPlayer(idx)}
+                              onChange={() => {}} // Handler moved to parent div for better UX
                             />
                             <label htmlFor={`incorrect-${idx}`}>{player.name}</label>
                           </div>
@@ -1202,7 +1206,9 @@ export default function JeopardyGame() {
                         onClick={handleMultipleIncorrect}
                         disabled={Object.keys(incorrectPlayers).length === 0}
                       >
-                        Deduct from Selected
+                        {Object.keys(incorrectPlayers).length > 0 
+                          ? `Deduct Points from ${Object.keys(incorrectPlayers).length} Player${Object.keys(incorrectPlayers).length > 1 ? 's' : ''}`
+                          : 'Select Players to Deduct Points'}
                       </button>
                     </div>
                     
