@@ -299,6 +299,12 @@ export default function JeopardyGame() {
       categories: updatedCategories
     });
     
+    // Ensure mobile scroll position is reset when opening a new question
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling on mobile
+    }, 100);
+    
     // Handle Daily Double differently
     if (question.dailyDouble) {
       // Show wager screen instead of question immediately
@@ -394,6 +400,9 @@ export default function JeopardyGame() {
       currentPlayer: nextPlayerIndex
     });
     
+    // Restore body scrolling
+    document.body.style.overflow = '';
+    
     // Close the question view and reset Daily Double state
     setSelectedQuestion(null);
     setShowAnswer(false);
@@ -442,6 +451,9 @@ export default function JeopardyGame() {
     
     // Reset incorrect players state
     setIncorrectPlayers({});
+    
+    // Restore body scrolling
+    document.body.style.overflow = '';
     
     // Close the question view and reset Daily Double state
     setSelectedQuestion(null);
@@ -1698,6 +1710,9 @@ export default function JeopardyGame() {
                                   categories: updatedCategories
                                 });
                               }
+                              
+                              // Restore body scrolling
+                              document.body.style.overflow = '';
                               
                               // Close the question view
                               setSelectedQuestion(null);
