@@ -25,7 +25,7 @@ JeopardyLM is an interactive, customizable Jeopardy-style game built with Next.j
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/jeopardy-lm.git
+   git clone https://github.com/zmuhls/jeopardy-lm.git
    cd jeopardy-lm
    ```
 
@@ -45,6 +45,7 @@ JeopardyLM is an interactive, customizable Jeopardy-style game built with Next.j
 
 - **Development server**: `npm run dev`
 - **Production build**: `npm run build`
+- **Static export**: `npm run export`
 - **Start production build**: `npm run start`
 - **Lint code**: `npm run lint`
 - **Type check**: `npx tsc --noEmit`
@@ -115,6 +116,10 @@ To use AI-generated questions:
 npm run build
 npm run start
 ```
+
+## GitHub Pages Deployment
+
+This project is configured to deploy to GitHub Pages using GitHub Actions. When you push changes to the main branch, the site will automatically be built and deployed to https://zmuhls.github.io/jeopardy-lm/
 
 ## License
 
