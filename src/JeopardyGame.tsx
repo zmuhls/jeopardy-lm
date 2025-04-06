@@ -7,6 +7,7 @@ interface Question {
   value: number;
   revealed: boolean;
   answered: boolean;
+  dailyDouble?: boolean;
 }
 
 interface Category {
@@ -59,7 +60,8 @@ const createDefaultQuestions = (value: number): Question => ({
   answer: "What is the answer?",
   value: value,
   revealed: false,
-  answered: false
+  answered: false,
+  dailyDouble: false
 });
 
 // Initialize default categories with questions
@@ -117,7 +119,8 @@ export default function JeopardyGame() {
     questionIndex: number,
     text: string,
     answer: string,
-    value: number
+    value: number,
+    dailyDouble?: boolean
   } | null>(null);
   
   // Player management state
@@ -391,7 +394,8 @@ export default function JeopardyGame() {
       questionIndex,
       text: question.text,
       answer: question.answer,
-      value: question.value
+      value: question.value,
+      dailyDouble: question.dailyDouble
     });
   };
   
@@ -400,13 +404,14 @@ export default function JeopardyGame() {
     if (!editingQuestion) return;
     
     const updatedCategories = [...gameState.categories];
-    const { categoryIndex, questionIndex, text, answer, value } = editingQuestion;
+    const { categoryIndex, questionIndex, text, answer, value, dailyDouble } = editingQuestion;
     
     updatedCategories[categoryIndex].questions[questionIndex] = {
       ...updatedCategories[categoryIndex].questions[questionIndex],
       text,
       answer,
-      value
+      value,
+      dailyDouble
     };
     
     setGameState({
@@ -454,9 +459,9 @@ export default function JeopardyGame() {
     setIsGenerating(true);
     
     try {
-      // Create a mock response instead of making API calls
-      // This bypasses CORS issues until a proper backend solution can be implemented
-      const useMockResponse = true;
+      // Option to use mock response or real API
+      // Set to false to use the actual AI API for generating questions
+      const useMockResponse = false;
       
       if (useMockResponse) {
         // Use a timeout to simulate network request
@@ -559,15 +564,19 @@ export default function JeopardyGame() {
         // Simple prompt for debugging
         `Return a simple Jeopardy question in JSON format like this: {"categories":[{"title":"Test","questions":[{"text":"Test question","answer":"What is test?","value":200}]}]}` :
         // Regular full prompt
-        `Generate a Jeopardy game with these categories: ${categories.join(', ')}. 
-        For each category, create 5 clues with increasing difficulty and their correct responses.
-        ${referenceText ? `Use the following reference content for creating questions: ${referenceText}` : ''}
+        `Create a new Jeopardy game board with ${categories.length} creative categories.
+        ${referenceText ? `Use the following reference content for creating specialized categories and questions: ${referenceText}` : ''}
+        
+        For each category, create 5 clues with values from $200 to $1000, ensuring they increase in difficulty.
         
         Important:
+        - Create entirely new category titles that are clever and engaging
         - Clues should be statements or facts, NOT questions
         - Responses should always start with "What is" or "Who is" etc.
         - Do not include the answer within the clue text
         - Make sure clues don't give away the answer directly
+        - Include a balanced mix of topics and difficulty levels
+        - Mark 2 random clues as "dailyDouble: true" (these are special high-value clues)
         
         Format your response as JSON with this exact structure:
         {
@@ -578,7 +587,8 @@ export default function JeopardyGame() {
                 {
                   "text": "The clue text that would be shown to contestants",
                   "answer": "What is the correct response?",
-                  "value": 200
+                  "value": 200,
+                  "dailyDouble": false
                 },
                 ... and so on for values 400, 600, 800, 1000
               ]
@@ -801,7 +811,8 @@ export default function JeopardyGame() {
               answer: q.answer,
               value: q.value,
               revealed: false,
-              answered: false
+              answered: false,
+              dailyDouble: q.dailyDouble === true
             }))
           }));
           
@@ -1115,7 +1126,7 @@ export default function JeopardyGame() {
                   return (
                     <div 
                       key={`${categoryIndex}-${questionIndex}`} 
-                      className={`question-cell ${question.answered ? 'answered' : ''} ${showEditor ? 'editable' : ''}`}
+                      className={`question-cell ${question.answered ? 'answered' : ''} ${showEditor ? 'editable' : ''} ${question.dailyDouble ? 'daily-double' : ''}`}
                       onClick={() => {
                         if (showEditor) {
                           handleEditQuestion(categoryIndex, questionIndex);
@@ -1124,7 +1135,14 @@ export default function JeopardyGame() {
                         }
                       }}
                     >
-                      {question.answered && !showEditor ? '' : `$${question.value}`}
+                      {question.answered && !showEditor ? '' : (
+                        <>
+                          {`$${question.value}`}
+                          {question.dailyDouble && !question.answered && (
+                            <div className="daily-double-indicator">DD</div>
+                          )}
+                        </>
+                      )}
                       {showEditor && (
                         <div className="edit-icon">✏️</div>
                       )}
@@ -1314,6 +1332,17 @@ export default function JeopardyGame() {
                 <option value="800">$800</option>
                 <option value="1000">$1000</option>
               </select>
+            </div>
+            <div className="form-group">
+              <div className="daily-double-toggle">
+                <input
+                  type="checkbox"
+                  id="dailyDoubleToggle"
+                  checked={editingQuestion.dailyDouble === true}
+                  onChange={(e) => setEditingQuestion({...editingQuestion, dailyDouble: e.target.checked})}
+                />
+                <label htmlFor="dailyDoubleToggle">Mark as Daily Double</label>
+              </div>
             </div>
             <div className="button-group">
               <button onClick={saveQuestion}>Save</button>
