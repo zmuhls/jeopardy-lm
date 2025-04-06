@@ -1,6 +1,6 @@
 # JeopardyLM
 
-JeopardyLM is an interactive, customizable Jeopardy-style game built with Next.js, React, and TypeScript. Perfect for educational settings, this application allows teachers to create engaging quiz games with AI-generated questions or custom content.
+JeopardyLM is an interactive, customizable Jeopardy-style game built with Next.js, React, and TypeScript. Ideal for teachers to create engaging quiz games with AI-generated questions, clues, and custom categories.
 
 ## Features
 
