@@ -102,7 +102,7 @@ export default function JeopardyGame() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [aiProvider, setAiProvider] = useState('claude');
   const [apiKey, setApiKey] = useState('');
-  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy game creator. Create interesting and challenging questions.');
+  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy game creator. Create Jeopardy! clues, categories, and questions as answers. Align with Jeopardy! clues in broad style and content. Design clues and question pairs to avoid ambiguity and slippage, accounting for doubled meanings and rough synonyms. Do not leave room for interpretation, and double-check that all clues and question pairs are indeed ground truth. Be concise, be challenging, be accessible.');
   const [referenceText, setReferenceText] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
