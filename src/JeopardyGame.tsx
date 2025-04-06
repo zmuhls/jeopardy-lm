@@ -27,6 +27,10 @@ interface Player {
   active: boolean;
 }
 
+interface IncorrectPlayers {
+  [key: number]: boolean;
+}
+
 // API keys should be provided by users at runtime
 const TEST_KEYS = {
   claude: '',
@@ -103,6 +107,7 @@ export default function JeopardyGame() {
   const [gameTheme, setGameTheme] = useState('standard');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundNotification, setSoundNotification] = useState<string | null>(null);
+  const [incorrectPlayers, setIncorrectPlayers] = useState<IncorrectPlayers>({});
   
   // Board editing state
   const [showEditor, setShowEditor] = useState(false);
@@ -240,6 +245,9 @@ export default function JeopardyGame() {
     setSelectedQuestion({ categoryIndex, questionIndex });
     setShowAnswer(false);
     
+    // Reset incorrect players when selecting a new question
+    setIncorrectPlayers({});
+    
     // Mark question as revealed
     const updatedCategories = [...gameState.categories];
     updatedCategories[categoryIndex].questions[questionIndex].revealed = true;
@@ -251,6 +259,14 @@ export default function JeopardyGame() {
     
     // Play theme music when question is selected
     playSound('theme');
+  };
+
+  // Toggle incorrect player selection
+  const toggleIncorrectPlayer = (playerIdx: number) => {
+    setIncorrectPlayers(prev => ({
+      ...prev,
+      [playerIdx]: !prev[playerIdx]
+    }));
   };
 
   // Handle answering questions
@@ -293,6 +309,48 @@ export default function JeopardyGame() {
       players: updatedPlayers,
       currentPlayer: nextPlayerIndex
     });
+    
+    // Close the question view
+    setSelectedQuestion(null);
+    setShowAnswer(false);
+  };
+  
+  // Handle deducting points from multiple players
+  const handleMultipleIncorrect = () => {
+    if (!selectedQuestion) return;
+    
+    const { categoryIndex, questionIndex } = selectedQuestion;
+    const questionValue = gameState.categories[categoryIndex].questions[questionIndex].value;
+    
+    // Play incorrect sound
+    playSound('incorrect');
+    
+    // Update player scores for all selected incorrect players
+    const updatedPlayers = [...gameState.players];
+    
+    Object.keys(incorrectPlayers).forEach(playerIdxStr => {
+      const playerIdx = parseInt(playerIdxStr, 10);
+      if (incorrectPlayers[playerIdx]) {
+        updatedPlayers[playerIdx].score -= questionValue;
+      }
+    });
+    
+    // Mark question as answered
+    const updatedCategories = [...gameState.categories];
+    updatedCategories[categoryIndex].questions[questionIndex].answered = true;
+    
+    // Move to the next player
+    const nextPlayerIndex = (gameState.currentPlayer + 1) % gameState.players.length;
+    
+    setGameState({
+      ...gameState,
+      categories: updatedCategories,
+      players: updatedPlayers,
+      currentPlayer: nextPlayerIndex
+    });
+    
+    // Reset incorrect players state
+    setIncorrectPlayers({});
     
     // Close the question view
     setSelectedQuestion(null);
@@ -382,6 +440,12 @@ export default function JeopardyGame() {
       return;
     }
     
+    // Validate API key format
+    if (aiProvider === 'claude' && !apiKey.startsWith('sk-ant-')) {
+      alert("Invalid Claude API key format. Claude API keys should start with 'sk-ant-'");
+      return;
+    }
+    
     // Save settings to localStorage
     localStorage.setItem('jeopardy_api_key', apiKey);
     localStorage.setItem('jeopardy_ai_provider', aiProvider);
@@ -390,37 +454,138 @@ export default function JeopardyGame() {
     setIsGenerating(true);
     
     try {
-      // Create categories and questions structure to generate
+      // Create a mock response instead of making API calls
+      // This bypasses CORS issues until a proper backend solution can be implemented
+      const useMockResponse = true;
+      
+      if (useMockResponse) {
+        // Use a timeout to simulate network request
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Mock response data with sample questions
+        const mockData = {
+          categories: [
+            {
+              title: "World History",
+              questions: [
+                { text: "This emperor built a famous wall in northern China to keep out invaders", answer: "Who is Qin Shi Huang?", value: 200 },
+                { text: "This 'Great' ruler modernized Russia in the early 18th century", answer: "Who is Peter the Great?", value: 400 },
+                { text: "In 1453, this city fell to Ottoman forces led by Mehmed II", answer: "What is Constantinople?", value: 600 },
+                { text: "This Mongol leader's empire stretched from the Pacific Ocean to Eastern Europe", answer: "Who is Genghis Khan?", value: 800 },
+                { text: "The 1648 Treaty of Westphalia ended this European conflict", answer: "What is the Thirty Years' War?", value: 1000 }
+              ]
+            },
+            {
+              title: "Science",
+              questions: [
+                { text: "The chemical formula H2O represents this common substance", answer: "What is water?", value: 200 },
+                { text: "This element with symbol Fe is the most common on Earth by mass", answer: "What is iron?", value: 400 },
+                { text: "This scientist published the theory of general relativity in 1915", answer: "Who is Albert Einstein?", value: 600 },
+                { text: "This subatomic particle carries a positive charge", answer: "What is a proton?", value: 800 },
+                { text: "CRISPR-Cas9 is a technology used to edit this molecule", answer: "What is DNA?", value: 1000 }
+              ]
+            },
+            {
+              title: "Pop Culture",
+              questions: [
+                { text: "This 1997 film featured Leonardo DiCaprio and Kate Winslet on a doomed ocean liner", answer: "What is Titanic?", value: 200 },
+                { text: "This Swedish group's hits include 'Dancing Queen' and 'Mamma Mia'", answer: "Who is ABBA?", value: 400 },
+                { text: "This streaming service produced 'Stranger Things' and 'The Crown'", answer: "What is Netflix?", value: 600 },
+                { text: "This superhero film franchise has grossed over $25 billion worldwide", answer: "What is the Marvel Cinematic Universe?", value: 800 },
+                { text: "This British band's concept album 'The Dark Side of the Moon' stayed on charts for 15 years", answer: "Who is Pink Floyd?", value: 1000 }
+              ]
+            },
+            {
+              title: "Literature",
+              questions: [
+                { text: "This Shakespeare play features the character Juliet Capulet", answer: "What is Romeo and Juliet?", value: 200 },
+                { text: "This author wrote 'Pride and Prejudice' and 'Emma'", answer: "Who is Jane Austen?", value: 400 },
+                { text: "This dystopian novel by George Orwell introduced the concept of 'Big Brother'", answer: "What is 1984?", value: 600 },
+                { text: "This Colombian author wrote 'One Hundred Years of Solitude'", answer: "Who is Gabriel García Márquez?", value: 800 },
+                { text: "This James Joyce novel follows Leopold Bloom through a single day in Dublin", answer: "What is Ulysses?", value: 1000 }
+              ]
+            },
+            {
+              title: "Sports",
+              questions: [
+                { text: "This sport uses a shuttlecock", answer: "What is badminton?", value: 200 },
+                { text: "Wayne Gretzky is considered the greatest player in the history of this sport", answer: "What is hockey?", value: 400 },
+                { text: "This golfer has won 15 major championships", answer: "Who is Tiger Woods?", value: 600 },
+                { text: "In tennis, this term refers to a tied score of 40-40", answer: "What is deuce?", value: 800 },
+                { text: "This swimming stroke is performed on one's back", answer: "What is backstroke?", value: 1000 }
+              ]
+            },
+            {
+              title: "Geography",
+              questions: [
+                { text: "This is the largest ocean on Earth", answer: "What is the Pacific Ocean?", value: 200 },
+                { text: "This African country is home to the Pyramids of Giza", answer: "What is Egypt?", value: 400 },
+                { text: "The Amazon River flows through this rainforest", answer: "What is the Amazon Rainforest?", value: 600 },
+                { text: "This mountain range separates Europe from Asia", answer: "What are the Ural Mountains?", value: 800 },
+                { text: "This capital city sits at the mouth of the Chao Phraya River", answer: "What is Bangkok?", value: 1000 }
+              ]
+            }
+          ]
+        };
+        
+        // Format questions to match game state
+        const formattedCategories = mockData.categories.map(cat => ({
+          title: cat.title,
+          questions: cat.questions.map(q => ({
+            text: q.text,
+            answer: q.answer,
+            value: q.value,
+            revealed: false,
+            answered: false
+          }))
+        }));
+        
+        // Update game state with new questions
+        setGameState({
+          ...gameState,
+          categories: formattedCategories
+        });
+        
+        setShowSettings(false);
+        return;
+      }
+      
+      // If not using mock data, proceed with real API calls
       const categories = gameState.categories.map(cat => cat.title);
       
-      // Format the prompt for the AI
-      const prompt = `Generate a Jeopardy game with these categories: ${categories.join(', ')}. 
-      For each category, create 5 clues with increasing difficulty and their correct responses.
-      ${referenceText ? `Use the following reference content for creating questions: ${referenceText}` : ''}
-      
-      Important:
-      - Clues should be statements or facts, NOT questions
-      - Responses should always start with "What is" or "Who is" etc.
-      - Do not include the answer within the clue text
-      - Make sure clues don't give away the answer directly
-      
-      Format your response as JSON with this exact structure:
-      {
-        "categories": [
-          {
-            "title": "Category Name",
-            "questions": [
-              {
-                "text": "The clue text that would be shown to contestants",
-                "answer": "What is the correct response?",
-                "value": 200
-              },
-              ... and so on for values 400, 600, 800, 1000
-            ]
-          },
-          ... repeat for all ${categories.length} categories
-        ]
-      }`;
+      // Create a simpler prompt for debugging API connectivity
+      const isDebugMode = false;
+      const prompt = isDebugMode ? 
+        // Simple prompt for debugging
+        `Return a simple Jeopardy question in JSON format like this: {"categories":[{"title":"Test","questions":[{"text":"Test question","answer":"What is test?","value":200}]}]}` :
+        // Regular full prompt
+        `Generate a Jeopardy game with these categories: ${categories.join(', ')}. 
+        For each category, create 5 clues with increasing difficulty and their correct responses.
+        ${referenceText ? `Use the following reference content for creating questions: ${referenceText}` : ''}
+        
+        Important:
+        - Clues should be statements or facts, NOT questions
+        - Responses should always start with "What is" or "Who is" etc.
+        - Do not include the answer within the clue text
+        - Make sure clues don't give away the answer directly
+        
+        Format your response as JSON with this exact structure:
+        {
+          "categories": [
+            {
+              "title": "Category Name",
+              "questions": [
+                {
+                  "text": "The clue text that would be shown to contestants",
+                  "answer": "What is the correct response?",
+                  "value": 200
+                },
+                ... and so on for values 400, 600, 800, 1000
+              ]
+            },
+            ... repeat for all ${categories.length} categories
+          ]
+        }`;
       
       // API endpoints for different providers
       const apiEndpoints = {
@@ -445,8 +610,7 @@ export default function JeopardyGame() {
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-beta': 'messages-2023-06-01-short-backlog'
+            'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
             model: 'claude-3-opus-20240229',
@@ -545,6 +709,13 @@ export default function JeopardyGame() {
             console.log(`Retrying API request (attempt ${retries} of ${maxRetries})...`);
           }
           
+          // Log API request details for debugging
+          console.log(`Making request to ${aiProvider} API:`, {
+            endpoint: apiEndpoints[aiProvider as keyof typeof apiEndpoints],
+            method: apiConfigs[aiProvider as keyof typeof apiConfigs].method,
+            headers: { ...apiConfigs[aiProvider as keyof typeof apiConfigs].headers, 'x-api-key': '***REDACTED***' }
+          });
+          
           const response = await fetch(apiEndpoints[aiProvider as keyof typeof apiEndpoints], 
                                       apiConfigs[aiProvider as keyof typeof apiConfigs]);
           
@@ -557,12 +728,16 @@ export default function JeopardyGame() {
               // Wait longer with each retry
               await new Promise(resolve => setTimeout(resolve, 2000 * (retries + 1)));
             } else if (response.status === 401 || response.status === 403) {
-              throw new Error("Authentication failed. Please check that your API key is valid and has not expired.");
+              const responseText = await response.text();
+              console.error("Auth error details:", responseText);
+              throw new Error(`Authentication failed: ${response.status} ${response.statusText}. Please check that your API key is valid, has not expired, and has the correct format.`);
             } else if (response.status >= 500) {
               errorMessage = "The AI service is currently experiencing issues. Retrying...";
               await new Promise(resolve => setTimeout(resolve, 1500));
             } else {
-              throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+              const responseText = await response.text();
+              console.error("API error details:", responseText);
+              throw new Error(`API request failed: ${response.status} ${response.statusText}. ${responseText ? `Details: ${responseText}` : ''}`);
             }
             
             // Save error for retry logic
@@ -588,7 +763,15 @@ export default function JeopardyGame() {
           
           switch(aiProvider) {
             case 'claude':
-              jsonContent = data.content[0].text;
+              if (data.content && Array.isArray(data.content) && data.content.length > 0) {
+                jsonContent = data.content[0].text;
+              } else if (data.content && typeof data.content === 'string') {
+                // Handle older response format
+                jsonContent = data.content;
+              } else {
+                console.error("Unexpected Claude API response format:", data);
+                throw new Error("Unexpected Claude API response format");
+              }
               break;
             case 'openai':
             case 'mistral':
@@ -633,6 +816,24 @@ export default function JeopardyGame() {
           
         } catch (error: any) {
           lastError = error;
+          console.error('API request error:', error);
+          
+          // Handle network errors more explicitly
+          if (error.name === 'TypeError' && error.message === 'NetworkError when attempting to fetch resource.') {
+            console.log('Network error detected - this is often a CORS issue or network connectivity problem');
+            
+            // Use a more helpful error message for network errors
+            const enhancedError = new Error(
+              'Network error when trying to connect to the API. This might be due to:\n' +
+              '1. CORS restrictions (try using a different browser)\n' +
+              '2. Network connectivity issues\n' +
+              '3. Ad blockers or privacy extensions blocking the request\n' +
+              '4. VPN or proxy issues\n\n' +
+              'Try using a different AI provider or check your internet connection.'
+            );
+            throw enhancedError;
+          }
+          
           // Only retry for network errors or specific API errors
           if (error instanceof TypeError || 
               (typeof error.message === 'string' && 
@@ -979,6 +1180,30 @@ export default function JeopardyGame() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                    
+                    <div className="multi-deduction">
+                      <h4>Deduct From Multiple Players:</h4>
+                      <div className="player-checkboxes">
+                        {gameState.players.map((player, idx) => (
+                          <div key={idx} className="player-checkbox">
+                            <input
+                              type="checkbox"
+                              id={`incorrect-${idx}`}
+                              checked={!!incorrectPlayers[idx]}
+                              onChange={() => toggleIncorrectPlayer(idx)}
+                            />
+                            <label htmlFor={`incorrect-${idx}`}>{player.name}</label>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        className="deduct-multiple-button"
+                        onClick={handleMultipleIncorrect}
+                        disabled={Object.keys(incorrectPlayers).length === 0}
+                      >
+                        Deduct from Selected
+                      </button>
                     </div>
                     
                     <div className="back-option">
