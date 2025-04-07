@@ -100,9 +100,9 @@ export default function JeopardyGame() {
   // UI state
   const [selectedQuestion, setSelectedQuestion] = useState<{categoryIndex: number, questionIndex: number} | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [aiProvider, setAiProvider] = useState('claude');
+  const [aiProvider, setAiProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
-  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy game creator. Create Jeopardy! clues, categories, and questions as answers. Align with Jeopardy! clues in broad style and content. Design clues and question pairs to avoid ambiguity and slippage, accounting for doubled meanings and rough synonyms. Do not leave room for interpretation, and double-check that all clues and question pairs are indeed ground truth. Be concise, be challenging, be accessible.');
+  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy! game creator tasked with generating well-structured, diverse Jeopardy! boards that follow the conventions and expectations of the game show. Your goal is to create categories, clues, and correct question-answer pairs that align with Jeopardy! standards. \n\nThe key principles are as follows:\n* Clarity & Precision: Ensure that all clues and question-answer pairs are clear, precise, and avoid ambiguity. There should be no room for misinterpretation of the clue\'s intent.\n* Variety & Creativity: Strive for a high level of variance in categories and clues. Avoid predictable, overused references, and ensure diversity across subject areas, from literature to science, pop culture, history, and beyond.\n* No Repetition: Each clue-question pair should be unique within the board. No duplication of answers or subjects should occur across categories.\n* Ground Truth Only: All clues must reflect accurate, verifiable information. Double-check facts to ensure correctness, and do not leave any opportunity for controversial interpretations of the clues.\n* Jeopardy! Rhetoric: Maintain the distinct Jeopardy! style in phrasing. Clues should be framed as statements, with the contestants providing the correct response in the form of a question.\n* Balanced Difficulty: Create a board with clues across various levels of difficulty (easy to hard), ensuring an even distribution that is challenging yet accessible to a wide range of contestants.\n* Avoid Redundancy in Themes: While categories may overlap in general topics (e.g., animals or countries), ensure the content within those categories does not repeat.\n* Maintain Clue Integrity: Do not reveal the answer to the clue in its explicit language');
   const [referenceText, setReferenceText] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -547,9 +547,9 @@ export default function JeopardyGame() {
       return;
     }
     
-    // Validate API key format
-    if (aiProvider === 'claude' && !apiKey.startsWith('sk-ant-')) {
-      alert("Invalid Claude API key format. Claude API keys should start with 'sk-ant-'");
+    // Validate that API key exists
+    if (!apiKey.trim()) {
+      alert("Please enter a valid API key");
       return;
     }
     
@@ -705,9 +705,9 @@ export default function JeopardyGame() {
         1. The response MUST include EXACTLY 6 categories in the "categories" array.
         2. There MUST be EXACTLY 2 questions total marked as dailyDouble: true across all categories.`;
       
-      // API endpoints for different providers
+      // API endpoints
       const apiEndpoints = {
-        claude: 'https://api.anthropic.com/v1/messages',
+        // API providers
         openai: 'https://api.openai.com/v1/chat/completions',
         mistral: 'https://api.mistral.ai/v1/chat/completions',
         deepseek: 'https://api.deepseek.com/v1/chat/completions',
@@ -715,30 +715,14 @@ export default function JeopardyGame() {
         gemini: 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent'
       };
       
-      // Set up retry mechanism
-      const maxRetries = 2;
+      // Set up enhanced retry mechanism with multiple proxy attempts
+      const maxRetries = 4; // Increased to allow trying multiple proxy services
       let retries = 0;
       let success = false;
       let lastError = null;
       
       // API request configurations
       const apiConfigs = {
-        claude: {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({
-            model: 'claude-3-opus-20240229',
-            max_tokens: 4000,
-            messages: [
-              { role: 'system', content: systemMessage },
-              { role: 'user', content: prompt }
-            ]
-          })
-        },
         openai: {
           method: 'POST',
           headers: {
@@ -827,15 +811,41 @@ export default function JeopardyGame() {
             console.log(`Retrying API request (attempt ${retries} of ${maxRetries})...`);
           }
           
+          // For retries, we'll use the base endpoint
+          let endpointKey = aiProvider;
+          
           // Log API request details for debugging
-          console.log(`Making request to ${aiProvider} API:`, {
-            endpoint: apiEndpoints[aiProvider as keyof typeof apiEndpoints],
+          console.log(`Making request to ${aiProvider} API${endpointKey !== aiProvider ? ' (via CORS proxy)' : ''}:`, {
+            endpoint: apiEndpoints[endpointKey as keyof typeof apiEndpoints],
             method: apiConfigs[aiProvider as keyof typeof apiConfigs].method,
             headers: { ...apiConfigs[aiProvider as keyof typeof apiConfigs].headers, 'x-api-key': '***REDACTED***' }
           });
           
-          const response = await fetch(apiEndpoints[aiProvider as keyof typeof apiEndpoints], 
-                                      apiConfigs[aiProvider as keyof typeof apiConfigs]);
+          // Prepare fetch config with special handling for Claude API
+          let fetchConfig = {
+            ...apiConfigs[aiProvider as keyof typeof apiConfigs],
+            mode: 'cors',
+            credentials: 'omit'
+          };
+          
+          // For proxies, we need to adjust the headers to work with the proxy service
+          if (endpointKey.includes('Proxy')) {
+            // Clone the headers to avoid modifying the original config
+            const modifiedHeaders = { ...fetchConfig.headers };
+            
+            // For certain proxies, we may need to adjust the headers
+            if (endpointKey === 'claudeProxy2') {
+              // CORS-Anywhere requires different header handling
+              modifiedHeaders['X-Requested-With'] = 'XMLHttpRequest';
+            }
+            
+            fetchConfig = {
+              ...fetchConfig,
+              headers: modifiedHeaders
+            };
+          }
+          
+          const response = await fetch(apiEndpoints[endpointKey as keyof typeof apiEndpoints], fetchConfig);
           
           if (!response.ok) {
             // Handle specific error codes with more helpful messages
@@ -849,6 +859,12 @@ export default function JeopardyGame() {
               const responseText = await response.text();
               console.error("Auth error details:", responseText);
               throw new Error(`Authentication failed: ${response.status} ${response.statusText}. Please check that your API key is valid, has not expired, and has the correct format.`);
+            } else if (response.status === 0) {
+              // This is typically a CORS error (status 0 with no response)
+              console.error("Likely CORS error - no response from server");
+              
+              // Network error handling for all providers
+              throw new Error("Network error connecting to the API. Please try using a different AI provider.");
             } else if (response.status >= 500) {
               errorMessage = "The AI service is currently experiencing issues. Retrying...";
               await new Promise(resolve => setTimeout(resolve, 1500));
@@ -880,17 +896,6 @@ export default function JeopardyGame() {
           let jsonContent = '';
           
           switch(aiProvider) {
-            case 'claude':
-              if (data.content && Array.isArray(data.content) && data.content.length > 0) {
-                jsonContent = data.content[0].text;
-              } else if (data.content && typeof data.content === 'string') {
-                // Handle older response format
-                jsonContent = data.content;
-              } else {
-                console.error("Unexpected Claude API response format:", data);
-                throw new Error("Unexpected Claude API response format");
-              }
-              break;
             case 'openai':
             case 'mistral':
             case 'deepseek':
@@ -1183,17 +1188,28 @@ export default function JeopardyGame() {
           console.error('API request error:', error);
           
           // Handle network errors more explicitly
-          if (error.name === 'TypeError' && error.message === 'NetworkError when attempting to fetch resource.') {
+          if (error.name === 'TypeError') {
             console.log('Network error detected - this is often a CORS issue or network connectivity problem');
             
-            // Use a more helpful error message for network errors
+            // Create a more detailed and helpful error message
+            let errorSuggestion;
+            
+            errorSuggestion = 'Consider trying a different API provider or check your network connection.';
+            
             const enhancedError = new Error(
               'Network error when trying to connect to the API. This might be due to:\n' +
-              '1. CORS restrictions (try using a different browser)\n' +
+              '1. CORS restrictions (browser security preventing direct API access)\n' +
               '2. Network connectivity issues\n' +
               '3. Ad blockers or privacy extensions blocking the request\n' +
               '4. VPN or proxy issues\n\n' +
-              'Try using a different AI provider or check your internet connection.'
+              `${errorSuggestion}\n\n` +
+              'Try these solutions:\n' +
+              '- Try using a different AI provider (like OpenAI or Mistral)\n' +
+              '- Check your ad blockers and disable them for this site\n' +
+              '- Make sure your API key format is correct (Claude API keys start with "sk-ant-")\n' +
+              '- Try using a different browser (Chrome tends to work best)\n' +
+              '- Verify your internet connection is stable\n' +
+              '- Try temporarily disabling any VPN services'
             );
             throw enhancedError;
           }
@@ -1450,7 +1466,6 @@ export default function JeopardyGame() {
               <div className="form-group">
                 <label>AI Provider:</label>
                 <select value={aiProvider} onChange={(e) => setAiProvider(e.target.value)}>
-                  <option value="claude">Claude (Anthropic)</option>
                   <option value="openai">GPT-4 (OpenAI)</option>
                   <option value="gemini">Gemini 1.5 Pro (Google)</option>
                   <option value="mistral">Mistral AI</option>
@@ -1643,6 +1658,35 @@ export default function JeopardyGame() {
                     {showAnswer ? (
                       <div className="player-selection">
                         <h4>Award Points To:</h4>
+                        <div className="back-option">
+                          <button 
+                            className="back-button"
+                            onClick={() => {
+                              // Mark the question as answered even with no points
+                              if (selectedQuestion) {
+                                const { categoryIndex, questionIndex } = selectedQuestion;
+                                const updatedCategories = [...gameState.categories];
+                                updatedCategories[categoryIndex].questions[questionIndex].answered = true;
+                                
+                                setGameState({
+                                  ...gameState,
+                                  categories: updatedCategories
+                                });
+                              }
+                              
+                              // Restore body scrolling
+                              document.body.style.overflow = '';
+                              
+                              // Close the question view
+                              setSelectedQuestion(null);
+                              setShowAnswer(false);
+                              setDailyDoubleWager(null);
+                              setShowDailyDoubleWager(false);
+                            }}
+                          >
+                            Return to Board (No Points)
+                          </button>
+                        </div>
                         <div className="player-answer-buttons">
                           {gameState.players.map((player, idx) => (
                             <div key={idx} className="player-answer-option">
@@ -1692,36 +1736,6 @@ export default function JeopardyGame() {
                             {Object.keys(incorrectPlayers).length > 0 
                               ? `Deduct Points from ${Object.keys(incorrectPlayers).length} Player${Object.keys(incorrectPlayers).length > 1 ? 's' : ''}`
                               : 'Select Players to Deduct Points'}
-                          </button>
-                        </div>
-                        
-                        <div className="back-option">
-                          <button 
-                            className="back-button"
-                            onClick={() => {
-                              // Mark the question as answered even with no points
-                              if (selectedQuestion) {
-                                const { categoryIndex, questionIndex } = selectedQuestion;
-                                const updatedCategories = [...gameState.categories];
-                                updatedCategories[categoryIndex].questions[questionIndex].answered = true;
-                                
-                                setGameState({
-                                  ...gameState,
-                                  categories: updatedCategories
-                                });
-                              }
-                              
-                              // Restore body scrolling
-                              document.body.style.overflow = '';
-                              
-                              // Close the question view
-                              setSelectedQuestion(null);
-                              setShowAnswer(false);
-                              setDailyDoubleWager(null);
-                              setShowDailyDoubleWager(false);
-                            }}
-                          >
-                            Return to Board (No Points)
                           </button>
                         </div>
                       </div>
