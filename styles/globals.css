@@ -315,6 +315,15 @@ button.sound-off {
   align-items: center;
 }
 
+.button-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
 .player-selection {
   margin-top: 20px;
   width: 100%;
@@ -324,13 +333,6 @@ button.sound-off {
   color: var(--jeopardy-gold);
   margin-bottom: 10px;
   font-size: 1.2rem;
-}
-
-.back-option {
-  display: inline-flex;
-  justify-content: center;
-  margin-left: 15px;
-  vertical-align: middle;
 }
 
 /* Multiple player deduction styles */
@@ -423,8 +425,9 @@ button.sound-off {
 }
 
 .back-button {
-  background-color: #424242;
-  border-color: #757575;
+  background-color: var(--jeopardy-blue);
+  border-color: var(--jeopardy-gold);
+  color: white;
   width: auto;
   display: inline-flex;
   justify-content: center;
@@ -432,11 +435,13 @@ button.sound-off {
   position: relative;
   padding: 10px 15px;
   transition: all 0.2s ease;
-  margin-right: 15px;
+  margin-left: 15px;
+  font-weight: bold;
 }
 
 .back-button:hover {
-  background-color: #616161;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .player-answer-buttons {
@@ -836,17 +841,22 @@ button.sound-off {
     padding-bottom: 40px; /* Add extra padding at bottom */
   }
   
-  .back-option {
-    display: block;
+  .button-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
     margin: 5px 0 15px 0;
-    text-align: center;
   }
   
-  .back-button {
-    width: 100%;
-    margin: 0 0 15px 0;
+  .button-row button {
+    flex: 1;
+    min-width: 140px;
+    max-width: 200px;
     font-size: 0.85rem;
-    padding: 12px 15px; /* Larger touch target */
+    padding: 12px 10px; /* Larger touch target */
+    margin: 0;
   }
   
   /* Mobile styles for multi-deduction */
