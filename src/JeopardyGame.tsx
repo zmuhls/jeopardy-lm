@@ -102,7 +102,7 @@ export default function JeopardyGame() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [aiProvider, setAiProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
-  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy! game creator tasked with generating well-structured, diverse Jeopardy! boards that follow the conventions and expectations of the game show. Your goal is to create categories, clues, and correct question-answer pairs that align with Jeopardy! standards. \n\nThe key principles are as follows:\n* Clarity & Precision: Ensure that all clues and question-answer pairs are clear, precise, and avoid ambiguity. There should be no room for misinterpretation of the clue\'s intent.\n* Variety & Creativity: Strive for a high level of variance in categories and clues. Avoid predictable, overused references, and ensure diversity across subject areas, from literature to science, pop culture, history, and beyond.\n* No Repetition: Each clue-question pair should be unique within the board. No duplication of answers or subjects should occur across categories.\n* Ground Truth Only: All clues must reflect accurate, verifiable information. Double-check facts to ensure correctness, and do not leave any opportunity for controversial interpretations of the clues.\n* Jeopardy! Rhetoric: Maintain the distinct Jeopardy! style in phrasing. Clues should be framed as statements, with the contestants providing the correct response in the form of a question.\n* Balanced Difficulty: Create a board with clues across various levels of difficulty (easy to hard), ensuring an even distribution that is challenging yet accessible to a wide range of contestants.\n* Avoid Redundancy in Themes: While categories may overlap in general topics (e.g., animals or countries), ensure the content within those categories does not repeat.\n* Maintain Clue Integrity: Do not reveal the answer to the clue in its explicit language');
+  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy! game creator tasked with generating well-structured, diverse Jeopardy! boards that follow the conventions and expectations of the game show. Your goal is to create categories, clues, and correct question-answer pairs that align with Jeopardy! standards. \n\nThe key principles are as follows:\n* Clarity & Precision: Ensure that all clues and question-answer pairs are clear, precise, and avoid ambiguity. There should be no room for misinterpretation of the clue\'s intent.\n* Variety & Creativity: Strive for a high level of variance in categories and clues. Avoid predictable, overused references, and ensure diversity across subject areas, from literature to science, pop culture, history, and beyond.\n* No Repetition: Each clue-question pair should be unique within the board. No duplication of answers or subjects should occur across categories.\n* Ground Truth Only: All clues must reflect accurate, verifiable information. Double-check facts to ensure correctness, and do not leave any opportunity for controversial interpretations of the clues.\n* Jeopardy! Rhetoric: Maintain the distinct Jeopardy! style in phrasing. Clues should be framed as statements, with the contestants providing the correct response in the form of a question.\n* Progressive Difficulty: The difficulty of questions should gradually increase corresponding to their dollar values. $200 questions should be easier, while $1000 questions should be more challenging, with a smooth gradient of difficulty for $400, $600, and $800 questions.\n* Avoid Redundancy in Themes: While categories may overlap in general topics (e.g., animals or countries), ensure the content within those categories does not repeat.\n* Maintain Clue Integrity: Do not reveal the answer to the clue in its explicit language. Category titles should NOT contain the answer or give away the solution to any clue.');
   const [referenceText, setReferenceText] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -1651,42 +1651,45 @@ export default function JeopardyGame() {
                   )}
                   
                   <div className="question-controls">
-                    <button onClick={toggleShowAnswer}>
-                      {showAnswer ? 'Hide Response' : 'Show Response'}
-                    </button>
+                    <div className="button-row">
+                      <button onClick={toggleShowAnswer}>
+                        {showAnswer ? 'Hide Response' : 'Show Response'}
+                      </button>
+                      
+                      {showAnswer && (
+                        <button 
+                          className="back-button"
+                          onClick={() => {
+                            // Mark the question as answered even with no points
+                            if (selectedQuestion) {
+                              const { categoryIndex, questionIndex } = selectedQuestion;
+                              const updatedCategories = [...gameState.categories];
+                              updatedCategories[categoryIndex].questions[questionIndex].answered = true;
+                              
+                              setGameState({
+                                ...gameState,
+                                categories: updatedCategories
+                              });
+                            }
+                            
+                            // Restore body scrolling
+                            document.body.style.overflow = '';
+                            
+                            // Close the question view
+                            setSelectedQuestion(null);
+                            setShowAnswer(false);
+                            setDailyDoubleWager(null);
+                            setShowDailyDoubleWager(false);
+                          }}
+                        >
+                          Return to Board (No Points)
+                        </button>
+                      )}
+                    </div>
                     
                     {showAnswer ? (
                       <div className="player-selection">
                         <h4>Award Points To:</h4>
-                        <div className="back-option">
-                          <button 
-                            className="back-button"
-                            onClick={() => {
-                              // Mark the question as answered even with no points
-                              if (selectedQuestion) {
-                                const { categoryIndex, questionIndex } = selectedQuestion;
-                                const updatedCategories = [...gameState.categories];
-                                updatedCategories[categoryIndex].questions[questionIndex].answered = true;
-                                
-                                setGameState({
-                                  ...gameState,
-                                  categories: updatedCategories
-                                });
-                              }
-                              
-                              // Restore body scrolling
-                              document.body.style.overflow = '';
-                              
-                              // Close the question view
-                              setSelectedQuestion(null);
-                              setShowAnswer(false);
-                              setDailyDoubleWager(null);
-                              setShowDailyDoubleWager(false);
-                            }}
-                          >
-                            Return to Board (No Points)
-                          </button>
-                        </div>
                         <div className="player-answer-buttons">
                           {gameState.players.map((player, idx) => (
                             <div key={idx} className="player-answer-option">
