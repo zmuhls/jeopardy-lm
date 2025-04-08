@@ -1560,18 +1560,20 @@ export default function JeopardyGame() {
                         }
                       }}
                     >
-                      {question.answered && !showEditor ? '' : (
-                        <>
-                          {`$${question.value}`}
-                          {/* Daily Double indicator only shown in editor mode or after it's been revealed */}
-                          {question.dailyDouble && !question.answered && showEditor && (
-                            <div className="daily-double-indicator">DD</div>
-                          )}
-                        </>
-                      )}
-                      {showEditor && (
-                        <div className="edit-icon">✏️</div>
-                      )}
+                      <div className="question-value-container">
+                        {question.answered && !showEditor ? '' : (
+                          <>
+                            {`$${question.value}`}
+                            {/* Daily Double indicator only shown in editor mode or after it's been revealed */}
+                            {question.dailyDouble && !question.answered && showEditor && (
+                              <div className="daily-double-indicator">DD</div>
+                            )}
+                          </>
+                        )}
+                        {showEditor && (
+                          <div className="edit-icon">✏️</div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
