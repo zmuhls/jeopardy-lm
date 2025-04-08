@@ -822,27 +822,26 @@ export default function JeopardyGame() {
           });
           
           // Prepare fetch config with special handling for Claude API
+          // Use type assertion to handle the complex type safely
           let fetchConfig = {
-            ...apiConfigs[aiProvider as keyof typeof apiConfigs],
+            ...(apiConfigs[aiProvider as keyof typeof apiConfigs] as any),
             mode: 'cors',
             credentials: 'omit'
           };
           
           // For proxies, we need to adjust the headers to work with the proxy service
           if (endpointKey.includes('Proxy')) {
-            // Clone the headers to avoid modifying the original config
-            const modifiedHeaders = { ...fetchConfig.headers };
-            
             // For certain proxies, we may need to adjust the headers
-            if (endpointKey === 'claudeProxy2') {
-              // CORS-Anywhere requires different header handling
-              modifiedHeaders['X-Requested-With'] = 'XMLHttpRequest';
+            if (endpointKey === 'claudeProxy2' && fetchConfig.headers) {
+              // Create a new headers object with the additional header
+              const headers = { ...fetchConfig.headers };
+              
+              // Add the header in a type-safe way
+              (headers as any)['X-Requested-With'] = 'XMLHttpRequest';
+              
+              // Update the headers in the config
+              fetchConfig.headers = headers;
             }
-            
-            fetchConfig = {
-              ...fetchConfig,
-              headers: modifiedHeaders
-            };
           }
           
           const response = await fetch(apiEndpoints[endpointKey as keyof typeof apiEndpoints], fetchConfig);
@@ -1121,8 +1120,8 @@ export default function JeopardyGame() {
           let dailyDoubleCount = 0;
           const allQuestions: {categoryIndex: number, questionIndex: number}[] = [];
           
-          formattedCategories.forEach((category, categoryIndex) => {
-            category.questions.forEach((question, questionIndex) => {
+          formattedCategories.forEach((category: any, categoryIndex: number) => {
+            category.questions.forEach((question: any, questionIndex: number) => {
               if (question.dailyDouble) {
                 dailyDoubleCount++;
               }
@@ -1138,8 +1137,8 @@ export default function JeopardyGame() {
             
             // Get all Daily Double positions
             const dailyDoublePositions: {categoryIndex: number, questionIndex: number}[] = [];
-            formattedCategories.forEach((category, categoryIndex) => {
-              category.questions.forEach((question, questionIndex) => {
+            formattedCategories.forEach((category: any, categoryIndex: number) => {
+              category.questions.forEach((question: any, questionIndex: number) => {
                 if (question.dailyDouble) {
                   dailyDoublePositions.push({categoryIndex, questionIndex});
                 }
