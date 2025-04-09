@@ -104,7 +104,8 @@ export default function JeopardyGame() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [aiProvider, setAiProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
-  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy! game creator tasked with generating well-structured, diverse Jeopardy! boards that follow the conventions and expectations of the game show. Your goal is to create categories, clues, and correct question-answer pairs that align with Jeopardy! standards. \n\nThe key principles are as follows:\n* Clarity & Precision: Ensure that all clues and question-answer pairs are clear, precise, and avoid ambiguity. There should be no room for misinterpretation of the clue\'s intent.\n* Specificity: Clues must lead to ONE unambiguous answer. Avoid vague clues that could reasonably accept multiple answers. Bad example: "This East Asian country is known for its unique blend of traditional and modern culture" - too vague, could be Japan, South Korea, China, etc. Good example: "Home to Samsung and Hyundai, this East Asian country has Seoul as its capital" - clearly points to South Korea only.\n* Variety & Creativity: Strive for a high level of variance in categories and clues. Avoid predictable, overused references, and ensure diversity across subject areas, from literature to science, pop culture, history, and beyond.\n* No Repetition: Each clue-question pair should be unique within the board. No duplication of answers or subjects should occur across categories.\n* Ground Truth Only: All clues must reflect accurate, verifiable information. Double-check facts to ensure correctness, and do not leave any opportunity for controversial interpretations of the clues.\n* Jeopardy! Rhetoric: Maintain the distinct Jeopardy! style in phrasing. Clues should be framed as statements, with the contestants providing the correct response in the form of a question.\n* Progressive Difficulty: The difficulty of questions should gradually increase corresponding to their dollar values. $200 questions should be easier, while $1000 questions should be more challenging, with a smooth gradient of difficulty for $400, $600, and $800 questions.\n* Avoid Redundancy in Themes: While categories may overlap in general topics (e.g., animals or countries), ensure the content within those categories does not repeat.\n* Maintain Clue Integrity: Do not reveal the answer to the clue in its explicit language. Category titles should NOT contain the answer or give away the solution to any clue.\n* STRICT WORD EXCLUSION RULE: The correct response/answer MUST NOT contain any words that appear in the clue or category. For example, if the clue mentions \"Greenwich Village\" then \"Greenwich Village\" cannot be part of the correct response. Ensure each answer refers to a specific, historically accurate entity or concept related to but not mentioned in the clue. Bad example: Category \"Neighborhoods\" with clue \"This Greenwich Village area was the epicenter of the Stonewall Riots\" and answer \"What is Greenwich Village?\" - this is incorrect because the answer repeats words from the clue. Good example: Category \"LGBTQ+ History\" with clue \"This 1969 uprising in Greenwich Village marked a turning point in the fight for gay rights\" and answer \"What are the Stonewall Riots?\" - this is correct because the answer doesn\'t repeat words from the clue.');
+  const [temperature, setTemperature] = useState(0.7);
+  const [systemMessage, setSystemMessage] = useState('Create a high-quality Jeopardy! game board with diverse, challenging, and well-structured categories and questions. Follow these key principles:\n\n- Make clues SPECIFIC with ONE unambiguous answer (e.g., NOT "This East Asian country has a unique blend of traditional culture" - too vague)\n- Use clever, engaging category titles\n- Ensure gradual difficulty increase from $200 to $1000 questions\n- Make clues factually accurate and verifiable\n- Format answers as questions ("Who is/What is...")\n- Do not repeat concepts across categories\n- NEVER include answer words in the clue text');
   const [referenceText, setReferenceText] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -151,6 +152,9 @@ export default function JeopardyGame() {
       
       const savedSystemMessage = localStorage.getItem('jeopardy_system_message');
       if (savedSystemMessage) setSystemMessage(savedSystemMessage);
+      
+      const savedTemperature = localStorage.getItem('jeopardy_temperature');
+      if (savedTemperature) setTemperature(parseFloat(savedTemperature));
       
       // Load saved boards from localStorage
       const savedBoardsData = localStorage.getItem('jeopardy_saved_boards');
@@ -552,6 +556,7 @@ export default function JeopardyGame() {
     localStorage.setItem('jeopardy_api_key', apiKey);
     localStorage.setItem('jeopardy_ai_provider', aiProvider);
     localStorage.setItem('jeopardy_system_message', systemMessage);
+    localStorage.setItem('jeopardy_temperature', temperature.toString());
     
     setIsGenerating(true);
     
@@ -735,7 +740,8 @@ export default function JeopardyGame() {
             messages: [
               { role: 'user', content: prompt }
             ],
-            max_tokens: 4000
+            max_tokens: 4000,
+            temperature: temperature
           })
         },
         mistral: {
@@ -748,7 +754,8 @@ export default function JeopardyGame() {
             model: 'mistral-large-latest',
             messages: [
               { role: 'user', content: prompt }
-            ]
+            ],
+            temperature: temperature
           })
         },
         deepseek: {
@@ -761,7 +768,8 @@ export default function JeopardyGame() {
             model: 'deepseek-chat',
             messages: [
               { role: 'user', content: prompt }
-            ]
+            ],
+            temperature: temperature
           })
         },
         meta: {
@@ -774,7 +782,8 @@ export default function JeopardyGame() {
             model: 'meta-llama-3-70b-instruct',
             messages: [
               { role: 'user', content: prompt }
-            ]
+            ],
+            temperature: temperature
           })
         },
         gemini: {
@@ -793,7 +802,7 @@ export default function JeopardyGame() {
               }
             ],
             generationConfig: {
-              temperature: 0.7,
+              temperature: temperature,
               maxOutputTokens: 4000
             }
           })
@@ -1481,6 +1490,24 @@ export default function JeopardyGame() {
                   placeholder="Enter your API key"
                 />
               </div>
+              <div className="form-group">
+                <label>
+                  <span className="label-text">Temperature:</span>
+                  <span className="label-hint">Higher values = more creative/varied results (0.0-1.0)</span>
+                </label>
+                <div className="temperature-control">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="1" 
+                    step="0.1" 
+                    value={temperature}
+                    onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                    className="temperature-slider"
+                  />
+                  <span className="temperature-value">{temperature}</span>
+                </div>
+              </div>
               <div className="form-group system-message-group">
                 <label>
                   <span className="label-text">System Message:</span>
@@ -1490,19 +1517,19 @@ export default function JeopardyGame() {
                   value={systemMessage} 
                   onChange={(e) => setSystemMessage(e.target.value)} 
                   placeholder="Instructions for the AI (e.g., 'Create challenging academic questions suitable for high school students')"
-                  rows={3}
+                  rows={5}
                   className="system-message-input"
                 />
               </div>
               <div className="form-group reference-text-group">
                 <label>
                   <span className="label-text">Reference Text (Optional):</span>
-                  <span className="label-hint">Add content to generate subject-specific questions. System prompt instructions will be prepended to this text.</span>
+                  <span className="label-hint">Add content to generate subject-specific questions</span>
                 </label>
                 <textarea 
                   value={referenceText} 
                   onChange={(e) => setReferenceText(e.target.value)} 
-                  placeholder="Paste text, articles, or lesson material that should be used as the basis for questions. The system prompt will be automatically included."
+                  placeholder="Paste text, articles, or lesson material that should be used as the basis for questions"
                   rows={5}
                   className="reference-text-input"
                 />
