@@ -9,19 +9,6 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   
   useEffect(() => {
     setIsClient(true);
-    
-    // Global error handler for unhandled promise rejections
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason);
-      // Prevent the default browser behavior (console error)
-      event.preventDefault();
-    };
-
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    
-    return () => {
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-    };
   }, []);
 
   if (!isClient) {

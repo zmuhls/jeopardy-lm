@@ -18,7 +18,11 @@ const Error: NextPage<ErrorProps> = ({ statusCode }) => {
           We apologize for the inconvenience. Please try refreshing the page or come back later.
         </p>
         <button 
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.reload();
+            }
+          }}
           className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
         >
           Refresh Page
