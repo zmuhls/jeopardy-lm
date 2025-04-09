@@ -104,7 +104,7 @@ export default function JeopardyGame() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [aiProvider, setAiProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
-  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy! game creator tasked with generating well-structured, diverse Jeopardy! boards that follow the conventions and expectations of the game show. Your goal is to create categories, clues, and correct question-answer pairs that align with Jeopardy! standards. \n\nThe key principles are as follows:\n* Clarity & Precision: Ensure that all clues and question-answer pairs are clear, precise, and avoid ambiguity. There should be no room for misinterpretation of the clue\'s intent.\n* Variety & Creativity: Strive for a high level of variance in categories and clues. Avoid predictable, overused references, and ensure diversity across subject areas, from literature to science, pop culture, history, and beyond.\n* No Repetition: Each clue-question pair should be unique within the board. No duplication of answers or subjects should occur across categories.\n* Ground Truth Only: All clues must reflect accurate, verifiable information. Double-check facts to ensure correctness, and do not leave any opportunity for controversial interpretations of the clues.\n* Jeopardy! Rhetoric: Maintain the distinct Jeopardy! style in phrasing. Clues should be framed as statements, with the contestants providing the correct response in the form of a question.\n* Progressive Difficulty: The difficulty of questions should gradually increase corresponding to their dollar values. $200 questions should be easier, while $1000 questions should be more challenging, with a smooth gradient of difficulty for $400, $600, and $800 questions.\n* Avoid Redundancy in Themes: While categories may overlap in general topics (e.g., animals or countries), ensure the content within those categories does not repeat.\n* Maintain Clue Integrity: Do not reveal the answer to the clue in its explicit language. Category titles should NOT contain the answer or give away the solution to any clue.\n* STRICT WORD EXCLUSION RULE: The correct response/answer MUST NOT contain any words that appear in the clue or category. For example, if the clue mentions \"Greenwich Village\" then \"Greenwich Village\" cannot be part of the correct response. Ensure each answer refers to a specific, historically accurate entity or concept related to but not mentioned in the clue. Bad example: Category \"Neighborhoods\" with clue \"This Greenwich Village area was the epicenter of the Stonewall Riots\" and answer \"What is Greenwich Village?\" - this is incorrect because the answer repeats words from the clue. Good example: Category \"LGBTQ+ History\" with clue \"This 1969 uprising in Greenwich Village marked a turning point in the fight for gay rights\" and answer \"What are the Stonewall Riots?\" - this is correct because the answer doesn\'t repeat words from the clue.');
+  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy! game creator tasked with generating well-structured, diverse Jeopardy! boards that follow the conventions and expectations of the game show. Your goal is to create categories, clues, and correct question-answer pairs that align with Jeopardy! standards. \n\nThe key principles are as follows:\n* Clarity & Precision: Ensure that all clues and question-answer pairs are clear, precise, and avoid ambiguity. There should be no room for misinterpretation of the clue\'s intent.\n* Specificity: Clues must lead to ONE unambiguous answer. Avoid vague clues that could reasonably accept multiple answers. Bad example: "This East Asian country is known for its unique blend of traditional and modern culture" - too vague, could be Japan, South Korea, China, etc. Good example: "Home to Samsung and Hyundai, this East Asian country has Seoul as its capital" - clearly points to South Korea only.\n* Variety & Creativity: Strive for a high level of variance in categories and clues. Avoid predictable, overused references, and ensure diversity across subject areas, from literature to science, pop culture, history, and beyond.\n* No Repetition: Each clue-question pair should be unique within the board. No duplication of answers or subjects should occur across categories.\n* Ground Truth Only: All clues must reflect accurate, verifiable information. Double-check facts to ensure correctness, and do not leave any opportunity for controversial interpretations of the clues.\n* Jeopardy! Rhetoric: Maintain the distinct Jeopardy! style in phrasing. Clues should be framed as statements, with the contestants providing the correct response in the form of a question.\n* Progressive Difficulty: The difficulty of questions should gradually increase corresponding to their dollar values. $200 questions should be easier, while $1000 questions should be more challenging, with a smooth gradient of difficulty for $400, $600, and $800 questions.\n* Avoid Redundancy in Themes: While categories may overlap in general topics (e.g., animals or countries), ensure the content within those categories does not repeat.\n* Maintain Clue Integrity: Do not reveal the answer to the clue in its explicit language. Category titles should NOT contain the answer or give away the solution to any clue.\n* STRICT WORD EXCLUSION RULE: The correct response/answer MUST NOT contain any words that appear in the clue or category. For example, if the clue mentions \"Greenwich Village\" then \"Greenwich Village\" cannot be part of the correct response. Ensure each answer refers to a specific, historically accurate entity or concept related to but not mentioned in the clue. Bad example: Category \"Neighborhoods\" with clue \"This Greenwich Village area was the epicenter of the Stonewall Riots\" and answer \"What is Greenwich Village?\" - this is incorrect because the answer repeats words from the clue. Good example: Category \"LGBTQ+ History\" with clue \"This 1969 uprising in Greenwich Village marked a turning point in the fight for gay rights\" and answer \"What are the Stonewall Riots?\" - this is correct because the answer doesn\'t repeat words from the clue.');
   const [referenceText, setReferenceText] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -404,7 +404,7 @@ export default function JeopardyGame() {
     });
   };
   
-  // Check if question follows the word exclusion rule
+  // Check if question follows the word exclusion rule and if it is specific enough
   const validateQuestionRule = (categoryTitle: string, questionText: string, answerText: string): { valid: boolean, reason?: string } => {
     // Normalize text for comparison (lowercase and remove punctuation)
     const normalizeText = (text: string) => {
@@ -432,6 +432,28 @@ export default function JeopardyGame() {
       return { 
         valid: false, 
         reason: `Answer contains words from the clue or category: ${overlappingWords.join(", ")}` 
+      };
+    }
+    
+    // Check if the question is too vague (could have multiple valid answers)
+    // Look for certain patterns that might indicate a vague question
+    const vaguePhrases = [
+      "known for", "famous for", "renowned for", "recognized for", "celebrated for",
+      "this country", "this nation", "this place", "this region", "this area", "this city",
+      "this culture", "this tradition",
+      "unique blend", "rich history", "diverse landscape"
+    ];
+    
+    // Check if question contains vague phrases without specific distinguishing details
+    const hasVaguePhrases = vaguePhrases.some(phrase => 
+      normalizedQuestion.includes(normalizeText(phrase))
+    );
+    
+    // If the question contains vague phrases, add a warning
+    if (hasVaguePhrases) {
+      return {
+        valid: false,
+        reason: "Question may be too vague and could accept multiple answers. Consider adding more specific, distinguishing details."
       };
     }
     
@@ -463,15 +485,24 @@ export default function JeopardyGame() {
     const { categoryIndex, questionIndex, text, answer, value, dailyDouble } = editingQuestion;
     const categoryTitle = gameState.categories[categoryIndex].title;
     
-    // Validate that the question follows the word exclusion rule
+    // Validate that the question follows both word exclusion rule and specificity requirement
     const validation = validateQuestionRule(categoryTitle, text, answer);
     
-    // If validation fails, silently log the issue but allow saving
+    // If validation fails, show warning and ask for confirmation
     if (!validation.valid) {
-      // Log format issue silently
+      // Log format issue for data collection
       logBadResponse(categoryTitle, text, answer, validation.reason || "Format issue");
       
-      // No user confirmation needed, just proceed with saving
+      // For vague questions, show a warning dialog to the user
+      if (validation.reason?.includes("too vague")) {
+        const confirmSave = window.confirm(
+          `Warning: This clue may be problematic.\n\n${validation.reason}\n\nFor example, a clue like "This East Asian country is known for its unique blend of traditional and modern culture" could accept multiple answers like Japan, South Korea, China, etc.\n\nDo you want to save anyway?`
+        );
+        
+        if (!confirmSave) {
+          return; // Don't save if the user cancels
+        }
+      }
     }
     
     const updatedCategories = [...gameState.categories];
@@ -480,7 +511,8 @@ export default function JeopardyGame() {
       text,
       answer,
       value,
-      dailyDouble
+      dailyDouble,
+      ruleViolation: validation.valid ? null : validation.reason
     };
     
     setGameState({
