@@ -546,6 +546,61 @@ button:hover:after {
   line-height: 1.2; /* Tighter line height */
 }
 
+/* Temperature Slider */
+.temperature-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.temperature-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #0a3d8f;
+  outline: none;
+  transition: background 0.2s;
+}
+
+.temperature-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--jeopardy-gold);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.temperature-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.temperature-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--jeopardy-gold);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.temperature-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--jeopardy-gold);
+  min-width: 2rem;
+  text-align: center;
+}
+
 /* Settings Modal */
 .settings-modal, .editor-modal {
   position: fixed;
