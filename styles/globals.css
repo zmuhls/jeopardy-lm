@@ -62,51 +62,22 @@ button:hover:after {
   opacity: 1;
 }
 
-/* Sound button styles */
-button.sound-on {
-  background-color: #2e7d32;
-  border-color: #81c784;
-}
-
-button.sound-off {
-  background-color: #c62828;
-  border-color: #ef9a9a;
-}
-
-/* Sound notification */
-.sound-notification {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  z-index: 1000;
-  animation: fadeInOut 4s forwards;
-  pointer-events: none;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; transform: translate(-50%, 20px); }
-  15% { opacity: 1; transform: translate(-50%, 0); }
-  85% { opacity: 1; transform: translate(-50%, 0); }
-  100% { opacity: 0; transform: translate(-50%, -20px); }
-}
+/* Sound button temporarily removed */
 
 /* Jeopardy Game Styles */
 .jeopardy-game {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1280px;
   margin: 0 auto;
   color: white;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .game-board {
   background-color: var(--jeopardy-blue);
   border-radius: 8px;
-  padding: 20px;
+  padding: 15px 20px; /* Reduced top/bottom padding from 20px to 15px */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
@@ -114,7 +85,7 @@ button.sound-off {
   text-align: center;
   color: var(--jeopardy-gold);
   font-size: 2.5rem;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* Reduced from 20px */
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   font-weight: bold;
 }
@@ -123,7 +94,7 @@ button.sound-off {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* Reduced from 20px */
 }
 
 .theme-selector {
@@ -140,19 +111,20 @@ button.sound-off {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 8px; /* Reduced from 10px */
+  width: 100%;
 }
 
 .category-header {
   background-color: var(--category-bg);
   color: var(--jeopardy-gold);
-  padding: 15px 5px;
+  padding: 12px 5px; /* Reduced from 15px */
   text-align: center;
   font-weight: bold;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   font-size: 0.85rem;
-  height: 60px;
+  height: 55px; /* Reduced from 60px */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,13 +155,14 @@ button.sound-off {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 8px; /* Reduced from 10px */
+  width: 100%;
 }
 
 .question-cell {
   background-color: var(--question-bg);
   color: var(--jeopardy-gold);
-  height: 80px;
+  height: 75px; /* Reduced from 80px */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -200,6 +173,8 @@ button.sound-off {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
+  text-align: center;
+  padding: 5px;
 }
 
 .question-cell:hover {
@@ -255,6 +230,30 @@ button.sound-off {
   padding: 2px 4px;
   border-radius: 4px;
   opacity: 0.9;
+}
+
+/* Rule violation styles - completely hidden */
+.question-cell.rule-violation {
+  /* No special styling to indicate rule violations */
+  position: relative;
+}
+
+.rule-violation-indicator {
+  display: none;
+}
+
+/* Hide all validation UI elements */
+.validation-warning {
+  display: none;
+}
+
+.validation-hint {
+  display: none;
+}
+
+/* Remove rule explanation section */
+.rule-explanation {
+  display: none;
 }
 
 /* Question View */
@@ -492,8 +491,8 @@ button.sound-off {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
-  margin-top: 20px;
-  padding: 15px;
+  margin-top: 10px; /* Reduced from 20px */
+  padding: 12px; /* Reduced from 15px */
   background-color: var(--jeopardy-dark-blue);
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -501,7 +500,7 @@ button.sound-off {
 
 .player {
   text-align: center;
-  padding: 10px 20px;
+  padding: 8px 15px; /* Reduced from 10px 20px */
   border-radius: 4px;
   transition: all 0.3s ease;
   flex: 1;
@@ -522,15 +521,18 @@ button.sound-off {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 5px;
+  margin-bottom: 3px; /* Reduced from 5px */
+  margin-top: 0;
+  font-size: 1.1rem; /* Slightly smaller font */
 }
 
 .score {
-  font-size: 1.5rem;
+  font-size: 1.3rem; /* Reduced from 1.5rem */
   font-weight: bold;
   color: var(--jeopardy-gold);
   text-align: center;
   width: 100%;
+  line-height: 1.2; /* Tighter line height */
 }
 
 /* Settings Modal */
@@ -778,20 +780,58 @@ button.sound-off {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1280px) {
+  .jeopardy-game {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 992px) {
+  .questions-row:last-child .question-cell {
+    font-size: 1.3rem; /* Smaller font for $1000 row on medium screens */
+  }
+}
+
 @media (max-width: 768px) {
+  .jeopardy-game {
+    padding: 0 10px;
+  }
+  
   .game-board {
     padding: 10px;
+    padding-bottom: 5px; /* Reduce bottom padding further */
+  }
+  
+  .game-title {
+    font-size: 2.2rem; /* Smaller title */
+    margin-bottom: 5px; /* Reduced margin */
   }
   
   .category-header {
     font-size: 0.7rem;
-    padding: 10px 2px;
-    height: 50px;
+    padding: 8px 2px; /* Reduced from 10px */
+    height: 45px; /* Reduced from 50px */
+  }
+  
+  .questions-row {
+    gap: 6px; /* Smaller gap between cells on mobile */
+    margin-bottom: 6px; /* Reduced bottom margin */
   }
   
   .question-cell {
-    height: 60px;
+    height: 55px; /* Reduced from 60px */
     font-size: 1.2rem;
+  }
+  
+  .questions-row:last-child .question-cell {
+    font-size: 1rem; /* Even smaller font for $1000 row on mobile */
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  
+  .scoreboard {
+    margin-top: 5px; /* Reduced margin to push up */
+    padding: 8px;
   }
   
   .question-text {
@@ -903,6 +943,53 @@ button.sound-off {
   .wager-input {
     font-size: 16px; /* Prevent zoom on input focus */
     min-height: 44px;
+  }
+  
+  /* Sound button mobile styles removed */
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .question-cell {
+    height: 45px; /* Even smaller for XS screens */
+    font-size: 1rem;
+    padding: 2px;
+  }
+  
+  .questions-row:last-child .question-cell {
+    font-size: 0.8rem;
+  }
+  
+  .categories-row,
+  .questions-row {
+    gap: 4px;
+  }
+  
+  .category-header {
+    font-size: 0.65rem;
+    height: 40px; /* Reduced from 45px */
+    padding: 6px 2px; /* Reduced padding */
+  }
+  
+  .game-title {
+    font-size: 1.8rem; /* Smaller title on XS screens */
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+  
+  .scoreboard {
+    padding: 5px;
+    margin-top: 3px;
+  }
+  
+  .game-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .game-controls button {
+    width: 100%;
+    margin: 3px 0;
   }
 }
 
@@ -1050,6 +1137,15 @@ button.sound-off {
   font-size: 1.1rem;
   color: rgba(255, 255, 255, 0.8);
   margin: 5px 0;
+}
+
+.wager-note {
+  color: var(--jeopardy-gold) !important;
+  font-weight: bold;
+  font-style: italic;
+  text-align: center;
+  font-size: 1rem !important;
+  margin-top: 10px !important;
 }
 
 .wager-input-container {

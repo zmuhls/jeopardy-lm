@@ -8,6 +8,7 @@ interface Question {
   revealed: boolean;
   answered: boolean;
   dailyDouble?: boolean;
+  ruleViolation?: string | null;
 }
 
 interface Category {
@@ -61,7 +62,8 @@ const createDefaultQuestions = (value: number): Question => ({
   value: value,
   revealed: false,
   answered: false,
-  dailyDouble: false
+  dailyDouble: false,
+  ruleViolation: null
 });
 
 // Initialize default categories with questions
@@ -102,13 +104,11 @@ export default function JeopardyGame() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [aiProvider, setAiProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
-  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy! game creator tasked with generating well-structured, diverse Jeopardy! boards that follow the conventions and expectations of the game show. Your goal is to create categories, clues, and correct question-answer pairs that align with Jeopardy! standards. \n\nThe key principles are as follows:\n* Clarity & Precision: Ensure that all clues and question-answer pairs are clear, precise, and avoid ambiguity. There should be no room for misinterpretation of the clue\'s intent.\n* Variety & Creativity: Strive for a high level of variance in categories and clues. Avoid predictable, overused references, and ensure diversity across subject areas, from literature to science, pop culture, history, and beyond.\n* No Repetition: Each clue-question pair should be unique within the board. No duplication of answers or subjects should occur across categories.\n* Ground Truth Only: All clues must reflect accurate, verifiable information. Double-check facts to ensure correctness, and do not leave any opportunity for controversial interpretations of the clues.\n* Jeopardy! Rhetoric: Maintain the distinct Jeopardy! style in phrasing. Clues should be framed as statements, with the contestants providing the correct response in the form of a question.\n* Progressive Difficulty: The difficulty of questions should gradually increase corresponding to their dollar values. $200 questions should be easier, while $1000 questions should be more challenging, with a smooth gradient of difficulty for $400, $600, and $800 questions.\n* Avoid Redundancy in Themes: While categories may overlap in general topics (e.g., animals or countries), ensure the content within those categories does not repeat.\n* Maintain Clue Integrity: Do not reveal the answer to the clue in its explicit language. Category titles should NOT contain the answer or give away the solution to any clue.');
+  const [systemMessage, setSystemMessage] = useState('You are a Jeopardy! game creator tasked with generating well-structured, diverse Jeopardy! boards that follow the conventions and expectations of the game show. Your goal is to create categories, clues, and correct question-answer pairs that align with Jeopardy! standards. \n\nThe key principles are as follows:\n* Clarity & Precision: Ensure that all clues and question-answer pairs are clear, precise, and avoid ambiguity. There should be no room for misinterpretation of the clue\'s intent.\n* Variety & Creativity: Strive for a high level of variance in categories and clues. Avoid predictable, overused references, and ensure diversity across subject areas, from literature to science, pop culture, history, and beyond.\n* No Repetition: Each clue-question pair should be unique within the board. No duplication of answers or subjects should occur across categories.\n* Ground Truth Only: All clues must reflect accurate, verifiable information. Double-check facts to ensure correctness, and do not leave any opportunity for controversial interpretations of the clues.\n* Jeopardy! Rhetoric: Maintain the distinct Jeopardy! style in phrasing. Clues should be framed as statements, with the contestants providing the correct response in the form of a question.\n* Progressive Difficulty: The difficulty of questions should gradually increase corresponding to their dollar values. $200 questions should be easier, while $1000 questions should be more challenging, with a smooth gradient of difficulty for $400, $600, and $800 questions.\n* Avoid Redundancy in Themes: While categories may overlap in general topics (e.g., animals or countries), ensure the content within those categories does not repeat.\n* Maintain Clue Integrity: Do not reveal the answer to the clue in its explicit language. Category titles should NOT contain the answer or give away the solution to any clue.\n* STRICT WORD EXCLUSION RULE: The correct response/answer MUST NOT contain any words that appear in the clue or category. For example, if the clue mentions \"Greenwich Village\" then \"Greenwich Village\" cannot be part of the correct response. Ensure each answer refers to a specific, historically accurate entity or concept related to but not mentioned in the clue. Bad example: Category \"Neighborhoods\" with clue \"This Greenwich Village area was the epicenter of the Stonewall Riots\" and answer \"What is Greenwich Village?\" - this is incorrect because the answer repeats words from the clue. Good example: Category \"LGBTQ+ History\" with clue \"This 1969 uprising in Greenwich Village marked a turning point in the fight for gay rights\" and answer \"What are the Stonewall Riots?\" - this is correct because the answer doesn\'t repeat words from the clue.');
   const [referenceText, setReferenceText] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [gameTheme, setGameTheme] = useState('standard');
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [soundNotification, setSoundNotification] = useState<string | null>(null);
   const [incorrectPlayers, setIncorrectPlayers] = useState<IncorrectPlayers>({});
   const [dailyDoubleWager, setDailyDoubleWager] = useState<number | null>(null);
   const [showDailyDoubleWager, setShowDailyDoubleWager] = useState(false);
@@ -136,69 +136,12 @@ export default function JeopardyGame() {
   const [editingPlayers, setEditingPlayers] = useState<Player[]>([]);
   const [tempPlayerCount, setTempPlayerCount] = useState(playerCount);
   
-  // Audio refs
-  const correctSound = useRef<HTMLAudioElement | null>(null);
-  const incorrectSound = useRef<HTMLAudioElement | null>(null);
-  const themeMusic = useRef<HTMLAudioElement | null>(null);
-  const revealSound = useRef<HTMLAudioElement | null>(null);
-
-  // Initialize audio elements and load saved data
+  // Initialize settings and load saved data
   useEffect(() => {
-    // Handle sound initialization in a try-catch to prevent errors
+    // Check if we're running in the browser
+    if (typeof window === 'undefined') return;
+    
     try {
-      // Check if we're running in the browser
-      if (typeof window === 'undefined') return;
-      
-      // Initialize audio once on mount
-      if (
-        correctSound.current === null && 
-        incorrectSound.current === null &&
-        themeMusic.current === null &&
-        revealSound.current === null
-      ) {
-        // Create dummy audio elements first to unlock audio API 
-        const unlockAudio = document.createElement('audio');
-        unlockAudio.setAttribute('src', 'data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
-        unlockAudio.play().catch(() => {});
-        
-        // Create actual audio elements
-        correctSound.current = new Audio();
-        incorrectSound.current = new Audio();
-        themeMusic.current = new Audio(); 
-        revealSound.current = new Audio();
-        
-        // Set dummy sources to avoid errors - we're not actually playing sounds
-        correctSound.current.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-        incorrectSound.current.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; 
-        themeMusic.current.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-        revealSound.current.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-        
-        // Preload
-        [correctSound.current, incorrectSound.current, themeMusic.current, revealSound.current].forEach(audio => {
-          if (audio) {
-            audio.load();
-            // Set volume to max
-            audio.volume = 1.0;
-            // Disable looping except for theme
-            audio.loop = audio === themeMusic.current;
-          }
-        });
-        
-        // Silently try to play and pause to unlock audio in some browsers
-        document.addEventListener('click', function initAudio() {
-          if (correctSound.current) {
-            correctSound.current.play()
-              .then(() => {
-                correctSound.current!.pause();
-                correctSound.current!.currentTime = 0;
-                console.log("Audio initialized successfully via user interaction");
-              })
-              .catch(e => console.log("Audio API still restricted:", e));
-          }
-          document.removeEventListener('click', initAudio);
-        }, { once: true });
-      }
-      
       // Load saved settings from localStorage
       const savedKey = localStorage.getItem('jeopardy_api_key');
       if (savedKey) setApiKey(savedKey);
@@ -209,11 +152,6 @@ export default function JeopardyGame() {
       const savedSystemMessage = localStorage.getItem('jeopardy_system_message');
       if (savedSystemMessage) setSystemMessage(savedSystemMessage);
       
-      const savedSoundSetting = localStorage.getItem('jeopardy_sound_enabled');
-      if (savedSoundSetting !== null) {
-        setSoundEnabled(savedSoundSetting === 'true');
-      }
-      
       // Load saved boards from localStorage
       const savedBoardsData = localStorage.getItem('jeopardy_saved_boards');
       if (savedBoardsData) {
@@ -221,7 +159,7 @@ export default function JeopardyGame() {
           const parsedBoards = JSON.parse(savedBoardsData);
           setSavedBoards(parsedBoards);
         } catch (e) {
-          console.error("Error parsing saved boards:", e);
+          // Silent error handling for saved board parsing
         }
       }
       
@@ -231,27 +169,10 @@ export default function JeopardyGame() {
         setGameTheme(savedTheme);
       }
     } catch (error) {
-      console.error("Error initializing audio:", error);
+      // Silent error handling for settings initialization
     }
-    
-    return () => {
-      try {
-        if (themeMusic.current) {
-          themeMusic.current.pause();
-          themeMusic.current.currentTime = 0;
-        }
-      } catch (error) {
-        console.error("Error cleaning up audio:", error);
-      }
-    };
   }, []);
 
-  // Save sound setting to localStorage whenever it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('jeopardy_sound_enabled', soundEnabled.toString());
-    }
-  }, [soundEnabled]);
   
   // Save theme preference to localStorage whenever it changes
   useEffect(() => {
@@ -267,15 +188,7 @@ export default function JeopardyGame() {
     }
   }, [savedBoards]);
   
-  // Dummy sound function that only logs - to prevent errors
-  const playSound = (type: 'correct' | 'incorrect' | 'theme' | 'reveal') => {
-    if (!soundEnabled) return;
-    
-    // Just log that we would play a sound, but don't actually try to play it
-    console.log(`Sound effect (${type}) would play here if enabled`);
-    
-    // In a real implementation with working sound files, we would play them here
-  };
+  // Theme music functions have been temporarily removed
 
   // Handle category and question selection
   const handleQuestionSelect = (categoryIndex: number, questionIndex: number) => {
@@ -311,13 +224,10 @@ export default function JeopardyGame() {
       setDailyDoubleWager(null);
       setShowDailyDoubleWager(true);
       
-      // For Daily Double, we play a special sound
-      console.log("Daily Double sound would play here!");
-      playSound('reveal'); // Use reveal sound as a substitute
+      // For Daily Double handling
     } else {
-      // For regular questions, show question directly and play theme music
+      // For regular questions, show question directly
       setShowDailyDoubleWager(false);
-      playSound('theme');
     }
   };
   
@@ -335,15 +245,15 @@ export default function JeopardyGame() {
     
     // Ensure wager is valid
     let finalWager = wager;
-    if (wager < 5) finalWager = 5; // Minimum wager
+    if (wager < 100) finalWager = 100; // Minimum wager is $100
     if (wager > maxWager) finalWager = maxWager; // Maximum wager
+    
+    // Round to nearest $100 increment
+    finalWager = Math.round(finalWager / 100) * 100;
     
     // Set the wager and show the question
     setDailyDoubleWager(finalWager);
     setShowDailyDoubleWager(false);
-    
-    // Play theme music for the actual question
-    playSound('theme');
   };
 
   // Toggle incorrect player selection
@@ -358,8 +268,6 @@ export default function JeopardyGame() {
   const handleAnswer = (correct: boolean, playerIndex?: number) => {
     if (!selectedQuestion) return;
     
-    // We would stop theme music here if it was playing
-    console.log('Would stop theme music here');
     
     const { categoryIndex, questionIndex } = selectedQuestion;
     let questionValue = gameState.categories[categoryIndex].questions[questionIndex].value;
@@ -368,9 +276,6 @@ export default function JeopardyGame() {
     if (gameState.categories[categoryIndex].questions[questionIndex].dailyDouble && dailyDoubleWager !== null) {
       questionValue = dailyDoubleWager;
     }
-    
-    // Play sound based on answer
-    playSound(correct ? 'correct' : 'incorrect');
     
     // Update player score - use provided playerIndex or current player if not specified
     const updatedPlayers = [...gameState.players];
@@ -422,8 +327,6 @@ export default function JeopardyGame() {
       questionValue = dailyDoubleWager;
     }
     
-    // Play incorrect sound
-    playSound('incorrect');
     
     // Update player scores for all selected incorrect players
     const updatedPlayers = [...gameState.players];
@@ -501,13 +404,77 @@ export default function JeopardyGame() {
     });
   };
   
+  // Check if question follows the word exclusion rule
+  const validateQuestionRule = (categoryTitle: string, questionText: string, answerText: string): { valid: boolean, reason?: string } => {
+    // Normalize text for comparison (lowercase and remove punctuation)
+    const normalizeText = (text: string) => {
+      return text.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
+    };
+    
+    const normalizedCategory = normalizeText(categoryTitle);
+    const normalizedQuestion = normalizeText(questionText);
+    const normalizedAnswer = normalizeText(answerText);
+    
+    // Extract all words from category and question
+    const categoryWords = normalizedCategory.split(/\s+/).filter(word => word.length > 2); // Filter out short words
+    const questionWords = normalizedQuestion.split(/\s+/).filter(word => word.length > 2); // Filter out short words
+    const answerWords = normalizedAnswer.split(/\s+/);
+    
+    // Combined words from category and question
+    const allClueWords = [...categoryWords, ...questionWords];
+    
+    // Check if any words from clue appear in answer
+    const overlappingWords = allClueWords.filter(word => 
+      answerWords.some(answerWord => answerWord === word)
+    );
+    
+    if (overlappingWords.length > 0) {
+      return { 
+        valid: false, 
+        reason: `Answer contains words from the clue or category: ${overlappingWords.join(", ")}` 
+      };
+    }
+    
+    return { valid: true };
+  };
+  
+  // Log format issues for data collection
+  const logBadResponse = (categoryTitle: string, questionText: string, answerText: string, reason: string) => {
+    // Track formatting issues silently for future improvement
+    try {
+      const existingLogs = JSON.parse(localStorage.getItem('jeopardy_format_issues') || '[]');
+      existingLogs.push({
+        category: categoryTitle,
+        clue: questionText,
+        answer: answerText,
+        issue: reason,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('jeopardy_format_issues', JSON.stringify(existingLogs));
+    } catch (e) {
+      // Silent error handling for logging
+    }
+  };
+
   // Save edited question
   const saveQuestion = () => {
     if (!editingQuestion) return;
     
-    const updatedCategories = [...gameState.categories];
     const { categoryIndex, questionIndex, text, answer, value, dailyDouble } = editingQuestion;
+    const categoryTitle = gameState.categories[categoryIndex].title;
     
+    // Validate that the question follows the word exclusion rule
+    const validation = validateQuestionRule(categoryTitle, text, answer);
+    
+    // If validation fails, silently log the issue but allow saving
+    if (!validation.valid) {
+      // Log format issue silently
+      logBadResponse(categoryTitle, text, answer, validation.reason || "Format issue");
+      
+      // No user confirmation needed, just proceed with saving
+    }
+    
+    const updatedCategories = [...gameState.categories];
     updatedCategories[categoryIndex].questions[questionIndex] = {
       ...updatedCategories[categoryIndex].questions[questionIndex],
       text,
@@ -533,10 +500,6 @@ export default function JeopardyGame() {
 
   // Toggle answer visibility
   const toggleShowAnswer = () => {
-    // Play reveal sound
-    if (!showAnswer) {
-      playSound('reveal');
-    }
     setShowAnswer(!showAnswer);
   };
 
@@ -662,12 +625,18 @@ export default function JeopardyGame() {
       
       // Create a simpler prompt for debugging API connectivity
       const isDebugMode = false;
+      
+      // Combine system message into reference text if it exists
+      const combinedReferenceText = referenceText ? 
+        `${systemMessage}\n\n${referenceText}` : 
+        systemMessage;
+      
       const prompt = isDebugMode ? 
         // Simple prompt for debugging
         `Return a simple Jeopardy question in JSON format like this: {"categories":[{"title":"Test","questions":[{"text":"Test question","answer":"What is test?","value":200}]}]}` :
         // Regular full prompt
         `Create a new Jeopardy game board with EXACTLY 6 creative categories.
-        ${referenceText ? `Use the following reference content for creating specialized categories and questions: ${referenceText}` : ''}
+        ${combinedReferenceText ? `Use the following reference content for creating specialized categories and questions: ${combinedReferenceText}` : ''}
         
         For each category, create 5 clues with values from $200 to $1000, ensuring they increase in difficulty.
         
@@ -732,7 +701,6 @@ export default function JeopardyGame() {
           body: JSON.stringify({
             model: 'gpt-4',
             messages: [
-              { role: 'system', content: systemMessage },
               { role: 'user', content: prompt }
             ],
             max_tokens: 4000
@@ -747,7 +715,6 @@ export default function JeopardyGame() {
           body: JSON.stringify({
             model: 'mistral-large-latest',
             messages: [
-              { role: 'system', content: systemMessage },
               { role: 'user', content: prompt }
             ]
           })
@@ -761,7 +728,6 @@ export default function JeopardyGame() {
           body: JSON.stringify({
             model: 'deepseek-chat',
             messages: [
-              { role: 'system', content: systemMessage },
               { role: 'user', content: prompt }
             ]
           })
@@ -775,7 +741,6 @@ export default function JeopardyGame() {
           body: JSON.stringify({
             model: 'meta-llama-3-70b-instruct',
             messages: [
-              { role: 'system', content: systemMessage },
               { role: 'user', content: prompt }
             ]
           })
@@ -791,7 +756,7 @@ export default function JeopardyGame() {
               {
                 role: 'user',
                 parts: [
-                  { text: `${systemMessage}\n\n${prompt}` }
+                  { text: prompt }
                 ]
               }
             ],
@@ -1080,17 +1045,36 @@ export default function JeopardyGame() {
           }
           
           // Format the generated content to match our game state structure
-          let formattedCategories = parsedData.categories.map((cat: any) => ({
-            title: cat.title,
-            questions: cat.questions.map((q: any) => ({
-              text: q.text,
-              answer: q.answer,
-              value: q.value,
-              revealed: false,
-              answered: false,
-              dailyDouble: q.dailyDouble === true
-            }))
-          }));
+          // Also validate each question against our word exclusion rule
+          let formattedCategories = parsedData.categories.map((cat: any) => {
+            // Validate each question in this category
+            const validatedQuestions = cat.questions.map((q: any) => {
+              // Check if this question violates our rules
+              const validation = validateQuestionRule(cat.title, q.text, q.answer);
+              
+              // If invalid, log it for ML training
+              if (!validation.valid) {
+                logBadResponse(cat.title, q.text, q.answer, validation.reason || "Unknown rule violation");
+                console.warn(`Rule violation in generated question: ${validation.reason}`);
+              }
+              
+              return {
+                text: q.text,
+                answer: q.answer,
+                value: q.value,
+                revealed: false,
+                answered: false,
+                dailyDouble: q.dailyDouble === true,
+                // Flag questions that violate our rules
+                ruleViolation: !validation.valid ? validation.reason : null
+              };
+            });
+            
+            return {
+              title: cat.title,
+              questions: validatedQuestions
+            };
+          });
           
           // Ensure we always have exactly 6 categories
           if (formattedCategories.length < 6) {
@@ -1429,23 +1413,6 @@ export default function JeopardyGame() {
             </button>
           </div>
           
-          <button 
-            onClick={() => {
-              // Toggle sound state
-              const newSoundState = !soundEnabled;
-              setSoundEnabled(newSoundState);
-              
-              // Try to play a test sound if enabling sound
-              if (newSoundState && correctSound.current) {
-                // Just toggle sound state without trying to play anything
-                console.log("Sound toggled:", newSoundState ? "on" : "off");
-                // No need to attempt playing sounds immediately
-              }
-            }}
-            className={soundEnabled ? 'sound-on' : 'sound-off'}
-          >
-            {soundEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
-          </button>
           <select 
             value={gameTheme} 
             onChange={(e) => setGameTheme(e.target.value)}
@@ -1456,6 +1423,7 @@ export default function JeopardyGame() {
             <option value="retro">Retro Theme</option>
           </select>
         </div>
+        
         
         {/* AI Settings Modal */}
         {showSettings && (
@@ -1497,12 +1465,12 @@ export default function JeopardyGame() {
               <div className="form-group reference-text-group">
                 <label>
                   <span className="label-text">Reference Text (Optional):</span>
-                  <span className="label-hint">Add content to generate subject-specific questions</span>
+                  <span className="label-hint">Add content to generate subject-specific questions. System prompt instructions will be prepended to this text.</span>
                 </label>
                 <textarea 
                   value={referenceText} 
                   onChange={(e) => setReferenceText(e.target.value)} 
-                  placeholder="Paste text, articles, or lesson material that should be used as the basis for questions"
+                  placeholder="Paste text, articles, or lesson material that should be used as the basis for questions. The system prompt will be automatically included."
                   rows={5}
                   className="reference-text-input"
                 />
@@ -1568,6 +1536,7 @@ export default function JeopardyGame() {
                             {question.dailyDouble && !question.answered && showEditor && (
                               <div className="daily-double-indicator">DD</div>
                             )}
+                            {/* Rule violation indicator completely removed */}
                           </>
                         )}
                         {showEditor && (
@@ -1600,6 +1569,7 @@ export default function JeopardyGame() {
                     <div className="wager-info">
                       <p>Current score: ${gameState.players[gameState.currentPlayer].score}</p>
                       <p>Maximum wager: ${Math.max(gameState.players[gameState.currentPlayer].score, 1000)}</p>
+                      <p className="wager-note">Wagers must be in $100 increments</p>
                     </div>
                     
                     <div className="wager-input-container">
@@ -1607,9 +1577,15 @@ export default function JeopardyGame() {
                         type="number" 
                         className="wager-input"
                         placeholder="Enter wager"
-                        min={5}
+                        min={100}
                         max={Math.max(gameState.players[gameState.currentPlayer].score, 1000)}
-                        onChange={(e) => setDailyDoubleWager(parseInt(e.target.value) || 0)}
+                        step={100}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 0;
+                          // Round to nearest $100
+                          const roundedValue = Math.round(value / 100) * 100;
+                          setDailyDoubleWager(roundedValue);
+                        }}
                       />
                       <button 
                         className="wager-button"
@@ -1850,6 +1826,9 @@ export default function JeopardyGame() {
         <div className="editor-modal">
           <div className="editor-content">
             <h2>Edit Clue</h2>
+            
+            {/* Live validation logic runs silently */}
+            
             <div className="form-group">
               <label>Clue Text:</label>
               <textarea 
@@ -1857,7 +1836,7 @@ export default function JeopardyGame() {
                 onChange={(e) => setEditingQuestion({...editingQuestion, text: e.target.value})}
                 rows={4}
                 autoFocus
-                placeholder="Phrase as a statement, not a question"
+                placeholder="Enter the clue text here"
               />
             </div>
             <div className="form-group">
@@ -1866,7 +1845,7 @@ export default function JeopardyGame() {
                 type="text" 
                 value={editingQuestion.answer} 
                 onChange={(e) => setEditingQuestion({...editingQuestion, answer: e.target.value})}
-                placeholder="Should start with 'What is' or 'Who is'"
+                placeholder="Enter the correct response"
               />
             </div>
             <div className="form-group">
