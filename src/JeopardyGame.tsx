@@ -99,6 +99,15 @@ export default function JeopardyGame() {
     finalJeopardyActive: false
   });
   
+  // Track clue ratings for downloading
+  const [clueRatings, setClueRatings] = useState<{
+    category: string;
+    clue: string;
+    answer: string;
+    rating: 'good' | 'bad';
+    timestamp: string;
+  }[]>([]);
+  
   // UI state
   const [selectedQuestion, setSelectedQuestion] = useState<{categoryIndex: number, questionIndex: number} | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -460,7 +469,7 @@ export default function JeopardyGame() {
     return { valid: true };
   };
   
-  // Log format issues for data collection
+  // Log format issues and user feedback for data collection
   const logBadResponse = (categoryTitle: string, questionText: string, answerText: string, reason: string) => {
     // Track formatting issues silently for future improvement
     try {
@@ -475,6 +484,48 @@ export default function JeopardyGame() {
       localStorage.setItem('jeopardy_format_issues', JSON.stringify(existingLogs));
     } catch (e) {
       // Silent error handling for logging
+    }
+  };
+  
+  // Log user feedback about clue quality for model improvement
+  const logClueRating = (categoryTitle: string, questionText: string, answerText: string, rating: 'good' | 'bad') => {
+    try {
+      // Create the rating data object
+      const newRating = {
+        category: categoryTitle,
+        clue: questionText,
+        answer: answerText,
+        rating: rating,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Add to local state for tracking
+      setClueRatings(prevRatings => [...prevRatings, newRating]);
+      
+      // Create output folder if it doesn't exist in localStorage
+      const existingRatings = JSON.parse(localStorage.getItem('jeopardy_clue_ratings') || '[]');
+      existingRatings.push(newRating);
+      localStorage.setItem('jeopardy_clue_ratings', JSON.stringify(existingRatings));
+      
+      // Save to a downloadable file periodically when ratings reach certain number
+      if (existingRatings.length % 5 === 0) {
+        // Create downloadable JSON file
+        const dataStr = JSON.stringify(existingRatings, null, 2);
+        const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+        
+        // Create download element
+        const exportFileDefaultName = `jeopardy-clue-ratings-${new Date().toISOString().split('T')[0]}.json`;
+        
+        // Offer to download the file
+        if (window.confirm('Clue ratings file ready. You\'ve rated 5 more clues. Download ratings data now for training?')) {
+          const linkElement = document.createElement('a');
+          linkElement.setAttribute('href', dataUri);
+          linkElement.setAttribute('download', exportFileDefaultName);
+          linkElement.click();
+        }
+      }
+    } catch (e) {
+      console.error('Error saving clue rating:', e);
     }
   };
 
@@ -1443,6 +1494,23 @@ export default function JeopardyGame() {
             <button className="load-button" onClick={() => setShowLoadModal(true)}>
               📂 Load Board ({savedBoards.length})
             </button>
+            {clueRatings.length > 0 && (
+              <button className="rating-export-button" onClick={() => {
+                // Create downloadable JSON file with all current ratings
+                const dataStr = JSON.stringify(clueRatings, null, 2);
+                const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+                
+                // Create download element
+                const exportFileDefaultName = `jeopardy-clue-ratings-${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+              }}>
+                📊 Export Ratings ({clueRatings.length})
+              </button>
+            )}
           </div>
           
           <select 
@@ -1656,6 +1724,49 @@ export default function JeopardyGame() {
                     <div className="answer">
                       <h3>Correct Response:</h3>
                       <p className="correct-response">{gameState.categories[selectedQuestion.categoryIndex].questions[selectedQuestion.questionIndex].answer}</p>
+                      
+                      {/* Rating buttons for clue quality feedback */}
+                      <div className="clue-rating-buttons">
+                        <button 
+                          className="rating-button good-button"
+                          onClick={() => {
+                            const category = gameState.categories[selectedQuestion.categoryIndex];
+                            const question = category.questions[selectedQuestion.questionIndex];
+                            logClueRating(category.title, question.text, question.answer, 'good');
+                            // Use less intrusive feedback
+                            const ratingFeedback = document.createElement('div');
+                            ratingFeedback.className = 'rating-feedback good-feedback';
+                            ratingFeedback.textContent = 'Rated as good! Thank you.';
+                            document.body.appendChild(ratingFeedback);
+                            setTimeout(() => {
+                              document.body.removeChild(ratingFeedback);
+                            }, 2000);
+                          }}
+                          title="Rate this as a good clue"
+                        >
+                          <span role="img" aria-label="Thumbs Up">👍</span>
+                        </button>
+                        <span className="rating-label">Rate this clue</span>
+                        <button 
+                          className="rating-button bad-button"
+                          onClick={() => {
+                            const category = gameState.categories[selectedQuestion.categoryIndex];
+                            const question = category.questions[selectedQuestion.questionIndex];
+                            logClueRating(category.title, question.text, question.answer, 'bad');
+                            // Use less intrusive feedback
+                            const ratingFeedback = document.createElement('div');
+                            ratingFeedback.className = 'rating-feedback bad-feedback';
+                            ratingFeedback.textContent = 'Rated as needing improvement. Thank you.';
+                            document.body.appendChild(ratingFeedback);
+                            setTimeout(() => {
+                              document.body.removeChild(ratingFeedback);
+                            }, 2000);
+                          }}
+                          title="Rate this as a bad clue"
+                        >
+                          <span role="img" aria-label="Thumbs Down">👎</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                   

@@ -318,6 +318,93 @@ button:hover:after {
   text-transform: uppercase;
 }
 
+/* Rating buttons styling */
+.clue-rating-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 15px;
+}
+
+.rating-button {
+  background: none;
+  border: 2px solid;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.rating-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.rating-button:active {
+  transform: scale(0.95);
+}
+
+.good-button {
+  border-color: #2ecc71;
+  color: #2ecc71;
+}
+
+.good-button:hover {
+  background-color: rgba(46, 204, 113, 0.1);
+}
+
+.bad-button {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.bad-button:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+.rating-label {
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+/* Rating feedback tooltip */
+.rating-feedback {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+.good-feedback {
+  background-color: #2ecc71;
+  box-shadow: 0 2px 10px rgba(46, 204, 113, 0.4);
+}
+
+.bad-feedback {
+  background-color: #e74c3c;
+  box-shadow: 0 2px 10px rgba(231, 76, 60, 0.4);
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -20px); }
+  20% { opacity: 1; transform: translate(-50%, 0); }
+  80% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -20px); }
+}
+
 .question-controls {
   margin-top: 30px;
   display: flex;
@@ -679,7 +766,7 @@ button:hover:after {
   margin: 5px 0;
 }
 
-.save-button, .load-button {
+.save-button, .load-button, .rating-export-button {
   padding: 8px 15px;
   font-size: 0.95rem;
   display: flex;
@@ -696,6 +783,17 @@ button:hover:after {
 .load-button {
   background-color: #1565c0;
   border-color: #64b5f6;
+}
+
+.rating-export-button {
+  background-color: #9c27b0;
+  border-color: #ce93d8;
+  animation: gentle-pulse 2s infinite alternate;
+}
+
+@keyframes gentle-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
 }
 
 /* Saved boards list styles */
