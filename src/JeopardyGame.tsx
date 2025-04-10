@@ -508,7 +508,8 @@ export default function JeopardyGame() {
       localStorage.setItem('jeopardy_clue_ratings', JSON.stringify(existingRatings));
       
       // Save to a downloadable file periodically when ratings reach certain number
-      if (existingRatings.length % 5 === 0) {
+      // A full Jeopardy board has 30 clues (6 categories x 5 clues each)
+      if (existingRatings.length % 30 === 0) {
         // Create downloadable JSON file
         const dataStr = JSON.stringify(existingRatings, null, 2);
         const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
@@ -517,7 +518,7 @@ export default function JeopardyGame() {
         const exportFileDefaultName = `jeopardy-clue-ratings-${new Date().toISOString().split('T')[0]}.json`;
         
         // Offer to download the file
-        if (window.confirm('Clue ratings file ready. You\'ve rated 5 more clues. Download ratings data now for training?')) {
+        if (window.confirm('Clue ratings file ready. You\'ve rated a full board worth of clues (30). Download ratings data now for training?')) {
           const linkElement = document.createElement('a');
           linkElement.setAttribute('href', dataUri);
           linkElement.setAttribute('download', exportFileDefaultName);
