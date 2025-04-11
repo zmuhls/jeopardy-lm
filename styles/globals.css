@@ -831,6 +831,35 @@ button:hover:after {
   animation: gentle-pulse 2s infinite alternate;
 }
 
+.primary-button {
+  background-color: #4caf50;
+  border-color: #a5d6a7;
+  font-weight: bold;
+  padding: 12px 20px;
+}
+
+.primary-button:hover {
+  background-color: #388e3c;
+}
+
+.rating-submission-info {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border-left: 4px solid #9c27b0;
+}
+
+.rating-submission-info p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.rating-submission-info strong {
+  color: var(--jeopardy-gold);
+  font-weight: bold;
+}
+
 @keyframes gentle-pulse {
   from { transform: scale(1); }
   to { transform: scale(1.05); }
