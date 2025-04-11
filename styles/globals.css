@@ -860,6 +860,29 @@ button:hover:after {
   font-weight: bold;
 }
 
+.submission-status {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  font-size: 1.1rem;
+  text-align: center;
+  z-index: 1000;
+  border: 2px solid var(--jeopardy-gold);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+
 @keyframes gentle-pulse {
   from { transform: scale(1); }
   to { transform: scale(1.05); }
