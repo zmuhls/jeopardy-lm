@@ -99,7 +99,7 @@ export default function JeopardyGame() {
     finalJeopardyActive: false
   });
   
-  // Track clue ratings for downloading
+  // Track clue ratings for model improvement
   const [clueRatings, setClueRatings] = useState<{
     category: string;
     clue: string;
@@ -107,6 +107,9 @@ export default function JeopardyGame() {
     rating: 'good' | 'bad';
     timestamp: string;
   }[]>([]);
+  
+  // Track submission status
+  const [showRatingSubmitModal, setShowRatingSubmitModal] = useState(false);
   
   // UI state
   const [selectedQuestion, setSelectedQuestion] = useState<{categoryIndex: number, questionIndex: number} | null>(null);
@@ -502,31 +505,62 @@ export default function JeopardyGame() {
       // Add to local state for tracking
       setClueRatings(prevRatings => [...prevRatings, newRating]);
       
-      // Create output folder if it doesn't exist in localStorage
+      // Store in localStorage for persistence
       const existingRatings = JSON.parse(localStorage.getItem('jeopardy_clue_ratings') || '[]');
       existingRatings.push(newRating);
       localStorage.setItem('jeopardy_clue_ratings', JSON.stringify(existingRatings));
       
-      // Save to a downloadable file periodically when ratings reach certain number
-      // A full Jeopardy board has 30 clues (6 categories x 5 clues each)
+      // Show submission prompt if we've reached a threshold (30 = full board)
       if (existingRatings.length % 30 === 0) {
-        // Create downloadable JSON file
-        const dataStr = JSON.stringify(existingRatings, null, 2);
-        const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-        
-        // Create download element
-        const exportFileDefaultName = `jeopardy-clue-ratings-${new Date().toISOString().split('T')[0]}.json`;
-        
-        // Offer to download the file
-        if (window.confirm('Clue ratings file ready. You\'ve rated a full board worth of clues (30). Download ratings data now for training?')) {
-          const linkElement = document.createElement('a');
-          linkElement.setAttribute('href', dataUri);
-          linkElement.setAttribute('download', exportFileDefaultName);
-          linkElement.click();
-        }
+        setShowRatingSubmitModal(true);
       }
     } catch (e) {
       console.error('Error saving clue rating:', e);
+    }
+  };
+
+  // Submit ratings for model fine-tuning
+  const submitRatings = () => {
+    try {
+      // Get all ratings from localStorage
+      const allRatings = JSON.parse(localStorage.getItem('jeopardy_clue_ratings') || '[]');
+      
+      if (allRatings.length === 0) {
+        alert('No ratings to submit.');
+        return;
+      }
+      
+      // Create filename with timestamp for uniqueness
+      const fileName = `jeopardy-clue-ratings-${new Date().toISOString().split('T')[0]}.json`;
+      
+      // Prepare the data for download
+      const dataStr = JSON.stringify(allRatings, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const dataUrl = URL.createObjectURL(dataBlob);
+      
+      // Create download element
+      const downloadElement = document.createElement('a');
+      downloadElement.setAttribute('href', dataUrl);
+      downloadElement.setAttribute('download', fileName);
+      downloadElement.style.display = 'none';
+      document.body.appendChild(downloadElement);
+      
+      // Trigger download
+      downloadElement.click();
+      
+      // Clean up
+      document.body.removeChild(downloadElement);
+      URL.revokeObjectURL(dataUrl);
+      
+      // Close modal
+      setShowRatingSubmitModal(false);
+      
+      // Optional: Clear ratings after successful submission
+      // localStorage.setItem('jeopardy_clue_ratings', '[]');
+      // setClueRatings([]);
+    } catch (e) {
+      console.error('Error submitting ratings:', e);
+      alert('There was an error preparing your ratings for submission.');
     }
   };
 
@@ -1496,20 +1530,8 @@ export default function JeopardyGame() {
               📂 Load Board ({savedBoards.length})
             </button>
             {clueRatings.length > 0 && (
-              <button className="rating-export-button" onClick={() => {
-                // Create downloadable JSON file with all current ratings
-                const dataStr = JSON.stringify(clueRatings, null, 2);
-                const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-                
-                // Create download element
-                const exportFileDefaultName = `jeopardy-clue-ratings-${new Date().toISOString().split('T')[0]}.json`;
-                
-                const linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', exportFileDefaultName);
-                linkElement.click();
-              }}>
-                📊 Export Ratings ({clueRatings.length})
+              <button className="rating-export-button" onClick={() => setShowRatingSubmitModal(true)}>
+                📊 Submit Ratings ({clueRatings.length})
               </button>
             )}
           </div>
@@ -1911,6 +1933,24 @@ export default function JeopardyGame() {
             <div className="button-group">
               <button onClick={saveCurrentGame}>Save</button>
               <button onClick={() => setShowSaveModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Rating Submission Modal */}
+      {showRatingSubmitModal && (
+        <div className="settings-modal">
+          <div className="settings-content">
+            <h2>Submit Clue Ratings</h2>
+            <div className="rating-submission-info">
+              <p>Your feedback helps us improve our AI-generated clues for Jeopardy!</p>
+              <p>You've rated <strong>{clueRatings.length}</strong> clues so far.</p>
+              <p>By submitting these ratings, you're helping us fine-tune language models to create better Jeopardy! clues.</p>
+            </div>
+            <div className="button-group">
+              <button onClick={submitRatings} className="primary-button">Submit Ratings</button>
+              <button onClick={() => setShowRatingSubmitModal(false)}>Close</button>
             </div>
           </div>
         </div>
