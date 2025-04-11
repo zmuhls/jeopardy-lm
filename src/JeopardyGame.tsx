@@ -520,7 +520,7 @@ export default function JeopardyGame() {
   };
 
   // Submit ratings for model fine-tuning
-  const submitRatings = () => {
+  const submitRatings = async () => {
     try {
       // Get all ratings from localStorage
       const allRatings = JSON.parse(localStorage.getItem('jeopardy_clue_ratings') || '[]');
@@ -529,6 +529,83 @@ export default function JeopardyGame() {
         alert('No ratings to submit.');
         return;
       }
+      
+      // Create summary for GitHub issue
+      const summaryText = `Jeopardy Clue Ratings Submission - ${new Date().toISOString().split('T')[0]}`;
+      const ratingsCount = `Contains ${allRatings.length} rated clues`;
+      
+      // First try to submit to GitHub Issues 
+      try {
+        // Show submission in progress
+        const statusElement = document.createElement('div');
+        statusElement.className = 'submission-status';
+        statusElement.innerHTML = 'Submitting ratings to repository...';
+        document.body.appendChild(statusElement);
+        
+        // GitHub repository information
+        const owner = 'jeopardy-lm-data'; // Replace with your GitHub username or org name
+        const repo = 'ratings-collection'; // Replace with your repository name
+        
+        // Note: For this to work, a GitHub token with 'repo' scope would need to be
+        // securely stored and available - for demo purposes, we're showing the structure
+        const tokenInput = prompt(
+          'To submit directly to our data collection repository, please enter a GitHub token with repo scope. ' +
+          'You can create one at https://github.com/settings/tokens ' + 
+          '(Leave blank to download the file instead)'
+        );
+        
+        // If token was provided, attempt GitHub submission
+        if (tokenInput && tokenInput.trim() !== '') {
+          const token = tokenInput.trim();
+          
+          // Data for GitHub issue
+          const issueData = {
+            title: summaryText,
+            body: `${ratingsCount}\n\n\`\`\`json\n${JSON.stringify(allRatings, null, 2)}\n\`\`\``,
+            labels: ['rating-submission', 'automated']
+          };
+          
+          // Create GitHub issue via API
+          const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(issueData)
+          });
+          
+          // Remove status element
+          document.body.removeChild(statusElement);
+          
+          if (response.ok) {
+            const responseData = await response.json();
+            
+            alert(`Ratings submitted successfully! Issue #${responseData.number} created.`);
+            
+            // Clear ratings after successful submission
+            localStorage.setItem('jeopardy_clue_ratings', '[]');
+            setClueRatings([]);
+            
+            // Close modal
+            setShowRatingSubmitModal(false);
+            return;
+          } else {
+            console.error('GitHub API Error:', await response.text());
+            throw new Error('Failed to submit to GitHub. Falling back to file download.');
+          }
+        } else {
+          // Remove status element if token wasn't provided
+          document.body.removeChild(statusElement);
+          console.log('No token provided, falling back to file download');
+        }
+      } catch (githubError) {
+        console.error('Error submitting to GitHub:', githubError);
+      }
+      
+      // Fallback to file download if GitHub submission fails or no token provided
+      console.log('Falling back to file download method');
       
       // Create filename with timestamp for uniqueness
       const fileName = `jeopardy-clue-ratings-${new Date().toISOString().split('T')[0]}.json`;
@@ -552,12 +629,15 @@ export default function JeopardyGame() {
       document.body.removeChild(downloadElement);
       URL.revokeObjectURL(dataUrl);
       
+      // Confirm successful download
+      alert('Ratings file downloaded. Please send this file to us to help improve the game.');
+      
       // Close modal
       setShowRatingSubmitModal(false);
       
-      // Optional: Clear ratings after successful submission
-      // localStorage.setItem('jeopardy_clue_ratings', '[]');
-      // setClueRatings([]);
+      // Clear ratings after successful submission
+      localStorage.setItem('jeopardy_clue_ratings', '[]');
+      setClueRatings([]);
     } catch (e) {
       console.error('Error submitting ratings:', e);
       alert('There was an error preparing your ratings for submission.');
