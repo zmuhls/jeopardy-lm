@@ -1885,6 +1885,14 @@ export default function JeopardyGame() {
         ))}
       </div>
       
+      {/* Disclaimer footer */}
+      <details className="disclaimer-footer">
+        <summary><span className="info-icon">ℹ️</span> This site is a demo only.</summary>
+        <div className="disclaimer-content">
+          AI models may produce misinformation. Please question all clues for possible confabulation.
+        </div>
+      </details>
+      
       {/* Save Game Modal */}
       {showSaveModal && (
         <div className="settings-modal">
