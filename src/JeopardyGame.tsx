@@ -543,8 +543,8 @@ export default function JeopardyGame() {
         document.body.appendChild(statusElement);
         
         // GitHub repository information
-        const owner = 'jeopardy-lm-data'; // Replace with your GitHub username or org name
-        const repo = 'ratings-collection'; // Replace with your repository name
+        const owner = 'zmuhls'; // GitHub username
+        const repo = 'jeopardy-lm-data'; // Repository name
         
         // Note: For this to work, a GitHub token with 'repo' scope would need to be
         // securely stored and available - for demo purposes, we're showing the structure
