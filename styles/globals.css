@@ -12,6 +12,7 @@
   --category-bg: #1a237e;
   --question-bg: #1565c0;
   --answered-bg: #424242;
+  --disclaimer-bg: rgba(0, 0, 0, 0.7);
 }
 
 body {
@@ -63,6 +64,45 @@ button:hover:after {
 }
 
 /* Sound button temporarily removed */
+
+/* Disclaimer Footer */
+.disclaimer-footer {
+  background-color: var(--disclaimer-bg);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.disclaimer-footer summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+
+.disclaimer-footer summary:hover {
+  color: var(--jeopardy-gold);
+}
+
+.disclaimer-footer summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclaimer-content {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-style: italic;
+}
+
+.info-icon {
+  font-size: 1.1rem;
+  margin-right: 5px;
+  color: var(--jeopardy-gold);
+}
 
 /* Jeopardy Game Styles */
 .jeopardy-game {
