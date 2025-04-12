@@ -50,7 +50,7 @@ const TEST_KEYS = {
   openai: '',
   mistral: '',
   deepseek: '',
-  meta: '',
+  openrouter: '',
   gemini: ''
 };
 
@@ -326,18 +326,25 @@ export default function JeopardyGame() {
         const goodCount = ratings.filter(r => r.rating === 'good').length;
         const successRate = goodCount / ratings.length;
         
-        // Adjust difficulty based on success rate
-        if (successRate > 0.75) {
-          // If success rate is high, make questions harder
+        // Use more gradual adjustments with a wider "normal" range
+        if (successRate > 0.65) {
+          // If success rate is high but not extreme, make questions slightly harder
           category.difficultyAdjustments![value] = Math.min(
             (category.difficultyAdjustments![value] || 0) + 1, 2
           );
-        } else if (successRate < 0.25) {
-          // If success rate is low, make questions easier
+        } else if (successRate > 0.85) {
+          // If success rate is very high, make questions significantly harder
+          category.difficultyAdjustments![value] = 2;
+        } else if (successRate < 0.35) {
+          // If success rate is low but not extreme, make questions slightly easier
           category.difficultyAdjustments![value] = Math.max(
             (category.difficultyAdjustments![value] || 0) - 1, -2
           );
+        } else if (successRate < 0.15) {
+          // If success rate is very low, make questions significantly easier
+          category.difficultyAdjustments![value] = -2;
         }
+        // For success rates between 35-65%, maintain current difficulty
       }
     });
     
@@ -816,6 +823,11 @@ export default function JeopardyGame() {
         const adjustmentsKey = 'jeopardy_difficulty_adjustments';
         const savedAdjustmentsStr = localStorage.getItem(adjustmentsKey);
         
+        // Load ratings data to provide concrete examples
+        const ratingsKey = 'jeopardy_question_difficulty_ratings';
+        const ratingsStr = localStorage.getItem(ratingsKey);
+        const ratingsData = ratingsStr ? JSON.parse(ratingsStr) : [];
+        
         if (savedAdjustmentsStr) {
           const savedAdjustments = JSON.parse(savedAdjustmentsStr);
           
@@ -828,6 +840,13 @@ export default function JeopardyGame() {
             if (hasAdjustments) {
               difficultyGuidance += `For category similar to "${categoryTitle}", adjust difficulty as follows:\n`;
               
+              // Add specific examples from rating data when available
+              const categoryRatings = ratingsData.filter((r: any) => 
+                r.category.toLowerCase() === categoryTitle.toLowerCase() || 
+                r.category.toLowerCase().includes(categoryTitle.toLowerCase()) ||
+                categoryTitle.toLowerCase().includes(r.category.toLowerCase())
+              );
+              
               Object.keys(adjustments).forEach(valueStr => {
                 const value = parseInt(valueStr, 10);
                 const adjustment = adjustments[value];
@@ -836,8 +855,33 @@ export default function JeopardyGame() {
                   // Provide specific guidance for each value tier
                   if (adjustment > 0) {
                     difficultyGuidance += `- For $${value} questions: Make them ${adjustment > 1 ? 'significantly' : 'somewhat'} HARDER with more specific details and specialized knowledge\n`;
+                    
+                    // Find examples of questions that were too easy (rated "good")
+                    const easyExamples = categoryRatings.filter((r: any) => 
+                      r.value === value && r.rating === 'good'
+                    ).slice(0, 2); // Limit to 2 examples
+                    
+                    if (easyExamples.length > 0) {
+                      difficultyGuidance += `  Examples of questions that were too easy:\n`;
+                      easyExamples.forEach((ex: any) => {
+                        difficultyGuidance += `  * "${ex.clue}" → "${ex.answer}"\n`;
+                      });
+                    }
+                    
                   } else if (adjustment < 0) {
                     difficultyGuidance += `- For $${value} questions: Make them ${adjustment < -1 ? 'significantly' : 'somewhat'} EASIER with more common knowledge and simpler concepts\n`;
+                    
+                    // Find examples of questions that were too difficult (rated "bad")
+                    const hardExamples = categoryRatings.filter((r: any) => 
+                      r.value === value && r.rating === 'bad'
+                    ).slice(0, 2); // Limit to 2 examples
+                    
+                    if (hardExamples.length > 0) {
+                      difficultyGuidance += `  Examples of questions that were too difficult:\n`;
+                      hardExamples.forEach((ex: any) => {
+                        difficultyGuidance += `  * "${ex.clue}" → "${ex.answer}"\n`;
+                      });
+                    }
                   }
                 }
               });
@@ -1702,7 +1746,7 @@ export default function JeopardyGame() {
                   <option value="gemini">Gemini 1.5 Pro (Google)</option>
                   <option value="mistral">Mistral AI</option>
                   <option value="deepseek">DeepSeek</option>
-                  <option value="meta">Llama (Meta)</option>
+                  <option value="openrouter">OpenRouter</option>
                 </select>
               </div>
               <div className="form-group">
