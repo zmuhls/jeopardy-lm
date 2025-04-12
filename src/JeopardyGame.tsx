@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // Define types for our game
+interface Rating {
+  rating: 'good' | 'bad';
+  timestamp: string;
+}
+
 interface Question {
   text: string;
   answer: string;
@@ -9,11 +14,17 @@ interface Question {
   answered: boolean;
   dailyDouble?: boolean;
   ruleViolation?: string | null;
+  ratings?: Rating[];
+}
+
+interface DifficultyAdjustments {
+  [key: number]: number; // Maps value tiers (200, 400, etc.) to difficulty adjustments (-2 to +2)
 }
 
 interface Category {
   title: string;
   questions: Question[];
+  difficultyAdjustments?: DifficultyAdjustments;
 }
 
 interface GameState {
@@ -63,14 +74,22 @@ const createDefaultQuestions = (value: number): Question => ({
   revealed: false,
   answered: false,
   dailyDouble: false,
-  ruleViolation: null
+  ruleViolation: null,
+  ratings: []
 });
 
 // Initialize default categories with questions
 const initializeCategories = (): Category[] => {
   return defaultCategories.map(title => ({
     title,
-    questions: defaultValues.map(createDefaultQuestions)
+    questions: defaultValues.map(createDefaultQuestions),
+    difficultyAdjustments: {
+      200: 0,
+      400: 0,
+      600: 0,
+      800: 0,
+      1000: 0
+    }
   }));
 };
 
@@ -268,6 +287,97 @@ export default function JeopardyGame() {
     }));
   };
 
+  // Function to adjust category difficulty based on player performance
+  const adjustCategoryDifficulty = (categories: Category[], categoryIndex: number): void => {
+    const category = categories[categoryIndex];
+    
+    // Ensure difficultyAdjustments is initialized
+    if (!category.difficultyAdjustments) {
+      category.difficultyAdjustments = {
+        200: 0,
+        400: 0,
+        600: 0,
+        800: 0,
+        1000: 0
+      };
+    }
+    
+    // Group ratings by value tier
+    const valueRatings: {[key: number]: Rating[]} = {};
+    
+    // Collect all ratings for each value tier
+    category.questions.forEach(question => {
+      if (question.ratings && question.ratings.length > 0) {
+        const value = question.value;
+        if (!valueRatings[value]) {
+          valueRatings[value] = [];
+        }
+        valueRatings[value] = [...valueRatings[value], ...question.ratings];
+      }
+    });
+    
+    // Calculate adjustments for each value tier
+    Object.keys(valueRatings).forEach(valueStr => {
+      const value = parseInt(valueStr, 10);
+      const ratings = valueRatings[value];
+      
+      // Only adjust if we have enough data (at least 3 ratings)
+      if (ratings && ratings.length >= 3) {
+        const goodCount = ratings.filter(r => r.rating === 'good').length;
+        const successRate = goodCount / ratings.length;
+        
+        // Adjust difficulty based on success rate
+        if (successRate > 0.75) {
+          // If success rate is high, make questions harder
+          category.difficultyAdjustments![value] = Math.min(
+            (category.difficultyAdjustments![value] || 0) + 1, 2
+          );
+        } else if (successRate < 0.25) {
+          // If success rate is low, make questions easier
+          category.difficultyAdjustments![value] = Math.max(
+            (category.difficultyAdjustments![value] || 0) - 1, -2
+          );
+        }
+      }
+    });
+    
+    // Save adjustments to localStorage for persistence
+    try {
+      const adjustmentsKey = 'jeopardy_difficulty_adjustments';
+      const savedAdjustments = localStorage.getItem(adjustmentsKey);
+      const allAdjustments = savedAdjustments ? JSON.parse(savedAdjustments) : {};
+      
+      // Update with the latest adjustments
+      allAdjustments[category.title] = category.difficultyAdjustments;
+      localStorage.setItem(adjustmentsKey, JSON.stringify(allAdjustments));
+      
+      // Also save ratings for analytics
+      const ratingsKey = 'jeopardy_question_difficulty_ratings';
+      const allRatings = localStorage.getItem(ratingsKey) ? 
+        JSON.parse(localStorage.getItem(ratingsKey) || '[]') : [];
+      
+      // Add new ratings to the stored collection
+      category.questions.forEach(question => {
+        if (question.ratings && question.ratings.length > 0) {
+          question.ratings.forEach(rating => {
+            allRatings.push({
+              category: category.title,
+              value: question.value,
+              clue: question.text,
+              answer: question.answer,
+              rating: rating.rating,
+              timestamp: rating.timestamp
+            });
+          });
+        }
+      });
+      
+      localStorage.setItem(ratingsKey, JSON.stringify(allRatings));
+    } catch (e) {
+      console.error('Error saving difficulty adjustments:', e);
+    }
+  };
+
   // Handle answering questions
   const handleAnswer = (correct: boolean, playerIndex?: number) => {
     if (!selectedQuestion) return;
@@ -289,9 +399,26 @@ export default function JeopardyGame() {
       ? questionValue 
       : -questionValue;
     
-    // Mark question as answered
+    // Mark question as answered and add rating
     const updatedCategories = [...gameState.categories];
+    
+    // Add rating to the question
+    const rating: Rating = {
+      rating: correct ? 'good' : 'bad',
+      timestamp: new Date().toISOString()
+    };
+    
+    // Ensure ratings array exists
+    if (!updatedCategories[categoryIndex].questions[questionIndex].ratings) {
+      updatedCategories[categoryIndex].questions[questionIndex].ratings = [];
+    }
+    
+    // Add the new rating
+    updatedCategories[categoryIndex].questions[questionIndex].ratings!.push(rating);
     updatedCategories[categoryIndex].questions[questionIndex].answered = true;
+    
+    // Update difficulty adjustments based on this answer
+    adjustCategoryDifficulty(updatedCategories, categoryIndex);
     
     // If player who answered was correct, make them the current player, 
     // otherwise move to the next player
@@ -342,9 +469,29 @@ export default function JeopardyGame() {
       }
     });
     
-    // Mark question as answered
+    // Mark question as answered and add rating
     const updatedCategories = [...gameState.categories];
+    
+    // Add "bad" rating to the question if at least one player got it wrong
+    if (Object.keys(incorrectPlayers).length > 0) {
+      const rating: Rating = {
+        rating: 'bad',
+        timestamp: new Date().toISOString()
+      };
+      
+      // Ensure ratings array exists
+      if (!updatedCategories[categoryIndex].questions[questionIndex].ratings) {
+        updatedCategories[categoryIndex].questions[questionIndex].ratings = [];
+      }
+      
+      // Add the new rating
+      updatedCategories[categoryIndex].questions[questionIndex].ratings!.push(rating);
+    }
+    
     updatedCategories[categoryIndex].questions[questionIndex].answered = true;
+    
+    // Update difficulty adjustments based on this answer
+    adjustCategoryDifficulty(updatedCategories, categoryIndex);
     
     // Move to the next player
     const nextPlayerIndex = (gameState.currentPlayer + 1) % gameState.players.length;
@@ -663,6 +810,46 @@ export default function JeopardyGame() {
       // Create a simpler prompt for debugging API connectivity
       const isDebugMode = false;
       
+      // Load existing difficulty adjustments for guidance
+      let difficultyGuidance = '';
+      try {
+        const adjustmentsKey = 'jeopardy_difficulty_adjustments';
+        const savedAdjustmentsStr = localStorage.getItem(adjustmentsKey);
+        
+        if (savedAdjustmentsStr) {
+          const savedAdjustments = JSON.parse(savedAdjustmentsStr);
+          
+          // Build difficulty guidance based on stored adjustments
+          Object.keys(savedAdjustments).forEach(categoryTitle => {
+            const adjustments = savedAdjustments[categoryTitle];
+            
+            // Only include categories with actual adjustments
+            const hasAdjustments = Object.values(adjustments).some(adj => adj !== 0);
+            if (hasAdjustments) {
+              difficultyGuidance += `For category similar to "${categoryTitle}", adjust difficulty as follows:\n`;
+              
+              Object.keys(adjustments).forEach(valueStr => {
+                const value = parseInt(valueStr, 10);
+                const adjustment = adjustments[value];
+                
+                if (adjustment !== 0) {
+                  // Provide specific guidance for each value tier
+                  if (adjustment > 0) {
+                    difficultyGuidance += `- For $${value} questions: Make them ${adjustment > 1 ? 'significantly' : 'somewhat'} HARDER with more specific details and specialized knowledge\n`;
+                  } else if (adjustment < 0) {
+                    difficultyGuidance += `- For $${value} questions: Make them ${adjustment < -1 ? 'significantly' : 'somewhat'} EASIER with more common knowledge and simpler concepts\n`;
+                  }
+                }
+              });
+              
+              difficultyGuidance += '\n';
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Error loading difficulty adjustments for AI prompt:', e);
+      }
+      
       // Combine system message into reference text if it exists
       const combinedReferenceText = referenceText ? 
         `${systemMessage}\n\n${referenceText}` : 
@@ -687,6 +874,7 @@ export default function JeopardyGame() {
         - Include a balanced mix of topics and difficulty levels
         - Mark EXACTLY 2 clues total as "dailyDouble: true" (these are special high-value clues)
         - Do not add more than 2 Daily Doubles in total across all categories
+        ${difficultyGuidance ? `\n\nDIFFICULTY ADJUSTMENT GUIDANCE based on player performance:\n${difficultyGuidance}` : ''}
         
         Format your response as JSON with this exact structure:
         {
@@ -1088,6 +1276,39 @@ export default function JeopardyGame() {
           // Format the generated content to match our game state structure
           // Also validate each question against our word exclusion rule
           let formattedCategories = parsedData.categories.map((cat: any) => {
+            // Initialize default difficulty adjustments
+            let categoryAdjustments = {
+              200: 0,
+              400: 0,
+              600: 0,
+              800: 0,
+              1000: 0
+            };
+            
+            // Check if we have saved adjustments for similar categories
+            try {
+              const adjustmentsKey = 'jeopardy_difficulty_adjustments';
+              const savedAdjustmentsStr = localStorage.getItem(adjustmentsKey);
+              
+              if (savedAdjustmentsStr) {
+                const savedAdjustments = JSON.parse(savedAdjustmentsStr);
+                
+                // Find if we have adjustments for a similar category
+                const similarCategory = Object.keys(savedAdjustments).find(existingCat => 
+                  existingCat.toLowerCase().includes(cat.title.toLowerCase()) || 
+                  cat.title.toLowerCase().includes(existingCat.toLowerCase())
+                );
+                
+                if (similarCategory) {
+                  // Use adjustments from the similar category
+                  categoryAdjustments = savedAdjustments[similarCategory];
+                  console.log(`Applied difficulty adjustments from similar category "${similarCategory}" to "${cat.title}"`);
+                }
+              }
+            } catch (e) {
+              console.error('Error loading difficulty adjustments:', e);
+            }
+            
             // Validate each question in this category
             const validatedQuestions = cat.questions.map((q: any) => {
               // Check if this question violates our rules
@@ -1107,13 +1328,16 @@ export default function JeopardyGame() {
                 answered: false,
                 dailyDouble: q.dailyDouble === true,
                 // Flag questions that violate our rules
-                ruleViolation: !validation.valid ? validation.reason : null
+                ruleViolation: !validation.valid ? validation.reason : null,
+                // Initialize ratings array
+                ratings: []
               };
             });
             
             return {
               title: cat.title,
-              questions: validatedQuestions
+              questions: validatedQuestions,
+              difficultyAdjustments: categoryAdjustments
             };
           });
           
@@ -1595,7 +1819,13 @@ export default function JeopardyGame() {
                             {question.dailyDouble && !question.answered && showEditor && (
                               <div className="daily-double-indicator">DD</div>
                             )}
-                            {/* Rule violation indicator completely removed */}
+                            {/* Difficulty adjustment indicator - only shown in editor mode */}
+                            {showEditor && category.difficultyAdjustments && category.difficultyAdjustments[question.value] !== 0 && (
+                              <div className={`difficulty-indicator ${category.difficultyAdjustments[question.value] > 0 ? 'harder' : 'easier'}`}>
+                                {category.difficultyAdjustments[question.value] > 0 ? '↑' : '↓'}
+                                {Math.abs(category.difficultyAdjustments[question.value])}
+                              </div>
+                            )}
                           </>
                         )}
                         {showEditor && (

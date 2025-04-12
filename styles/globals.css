@@ -242,6 +242,28 @@ button:hover:after {
   opacity: 0.9;
 }
 
+/* Difficulty adjustment indicators */
+.difficulty-indicator {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 0.7rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: bold;
+  opacity: 0.9;
+}
+
+.difficulty-indicator.harder {
+  background-color: #ff5252; /* Red for harder questions */
+  color: white;
+}
+
+.difficulty-indicator.easier {
+  background-color: #4caf50; /* Green for easier questions */
+  color: white;
+}
+
 /* Rule violation styles - completely hidden */
 .question-cell.rule-violation {
   /* No special styling to indicate rule violations */
