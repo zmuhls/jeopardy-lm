@@ -529,18 +529,67 @@ export default function JeopardyGame() {
         alert('No ratings to submit.');
         return;
       }
+
+      // Show submission in progress
+      const statusElement = document.createElement('div');
+      statusElement.className = 'submission-status';
+      statusElement.innerHTML = 'Submitting ratings...';
+      document.body.appendChild(statusElement);
+      
+      // Try direct JSON file download as primary method since API won't work in export mode
+      try {
+        console.log('Preparing JSON file download');
+        
+        // Create filename with timestamp for uniqueness
+        const fileName = `jeopardy-clue-ratings-${new Date().toISOString().split('T')[0]}.json`;
+        
+        // Prepare the data for download
+        const dataStr = JSON.stringify(allRatings, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const dataUrl = URL.createObjectURL(dataBlob);
+        
+        // Create download element
+        const downloadElement = document.createElement('a');
+        downloadElement.setAttribute('href', dataUrl);
+        downloadElement.setAttribute('download', fileName);
+        downloadElement.style.display = 'none';
+        document.body.appendChild(downloadElement);
+        
+        // Trigger download
+        downloadElement.click();
+        
+        // Clean up
+        document.body.removeChild(downloadElement);
+        URL.revokeObjectURL(dataUrl);
+        
+        // If status element still exists, remove it
+        if (document.body.contains(statusElement)) {
+          document.body.removeChild(statusElement);
+        }
+        
+        // Confirm successful download
+        alert('Ratings file downloaded! Please share this file to help improve the game.');
+        
+        // Clear ratings after successful download
+        localStorage.setItem('jeopardy_clue_ratings', '[]');
+        setClueRatings([]);
+        
+        // Close modal
+        setShowRatingSubmitModal(false);
+        return;
+      } catch (downloadError) {
+        console.error('Error preparing download:', downloadError);
+        // Continue with GitHub as fallback option
+      }
       
       // Create summary for GitHub issue
       const summaryText = `Jeopardy Clue Ratings Submission - ${new Date().toISOString().split('T')[0]}`;
       const ratingsCount = `Contains ${allRatings.length} rated clues`;
       
-      // First try to submit to GitHub Issues 
+      // Try to submit to GitHub Issues as a fallback
       try {
-        // Show submission in progress
-        const statusElement = document.createElement('div');
-        statusElement.className = 'submission-status';
+        // Update status message
         statusElement.innerHTML = 'Submitting ratings to repository...';
-        document.body.appendChild(statusElement);
         
         // GitHub repository information
         const owner = 'zmuhls'; // GitHub username
@@ -628,6 +677,11 @@ export default function JeopardyGame() {
       // Clean up
       document.body.removeChild(downloadElement);
       URL.revokeObjectURL(dataUrl);
+      
+      // If status element still exists, remove it
+      if (document.body.contains(statusElement)) {
+        document.body.removeChild(statusElement);
+      }
       
       // Confirm successful download
       alert('Ratings file downloaded. Please send this file to us to help improve the game.');

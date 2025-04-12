@@ -1,0 +1,191 @@
+[
+  {
+    "category": "Pop Goes the Easel",
+    "clue": "This artist's iconic soup cans became a symbol of Pop Art.",
+    "answer": "Who is Andy Warhol?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:37:17.601Z"
+  },
+  {
+    "category": "Pop Goes the Easel",
+    "clue": "This artist is known for his comic strip-inspired paintings, like \"Drowning Girl.\"",
+    "answer": "Who is Roy Lichtenstein?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:38:08.568Z"
+  },
+  {
+    "category": "Pop Goes the Easel",
+    "clue": "This British artist's work often featured flags and targets.",
+    "answer": "Who is Jasper Johns?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:38:44.419Z"
+  },
+  {
+    "category": "Romantic Notions",
+    "clue": "This key figure in German Romanticism is known for works like \"Faust.\"",
+    "answer": "Who is Johann Wolfgang von Goethe?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:39:21.757Z"
+  },
+  {
+    "category": "Romantic Notions",
+    "clue": "This Romantic poet wrote \"I Wandered Lonely as a Cloud.\"",
+    "answer": "Who is William Wordsworth?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:39:42.595Z"
+  },
+  {
+    "category": "Fidgety Fingers",
+    "clue": "This common fidgeting behavior involves repeatedly tapping one's fingers on a surface.",
+    "answer": "What is drumming?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:43:34.214Z"
+  },
+  {
+    "category": "Fidgety Fingers",
+    "clue": "This small, twirlable object became a popular fidget toy in the late 2010s.",
+    "answer": "What is a fidget spinner?",
+    "rating": "bad",
+    "timestamp": "2025-04-10T01:43:55.831Z"
+  },
+  {
+    "category": "Fidgety Fingers",
+    "clue": "This small, twirlable object became a popular fidget toy in the late 2010s.",
+    "answer": "What is a fidget spinner?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:44:26.551Z"
+  },
+  {
+    "category": "Fidgety Fingers",
+    "clue": "This repetitive motion of the foot is a common sign of nervousness or restlessness.",
+    "answer": "What is foot tapping?",
+    "rating": "bad",
+    "timestamp": "2025-04-10T01:45:36.747Z"
+  },
+  {
+    "category": "Fidgety Fingers",
+    "clue": "This sensory toy, often filled with small beads or pellets, can help individuals focus and regulate emotions.",
+    "answer": "What is a stress ball?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:46:10.058Z"
+  },
+  {
+    "category": "Fidgety Fingers",
+    "clue": "This theory suggests that fidgeting can help regulate attention and improve cognitive function.",
+    "answer": "What is the self-regulation theory?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:47:07.704Z"
+  },
+  {
+    "category": "Data Diet",
+    "clue": "This subset of data is used to train a machine learning model.",
+    "answer": "What is training data?",
+    "rating": "bad",
+    "timestamp": "2025-04-10T01:47:22.544Z"
+  },
+  {
+    "category": "Data Diet",
+    "clue": "This technique involves splitting data into training and testing sets to evaluate model performance.",
+    "answer": "What is cross-validation?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:47:44.454Z"
+  },
+  {
+    "category": "Data Diet",
+    "clue": "This type of data is crucial for preventing overfitting in machine learning models.",
+    "answer": "What is validation data?",
+    "rating": "bad",
+    "timestamp": "2025-04-10T01:48:04.619Z"
+  },
+  {
+    "category": "Data Diet",
+    "clue": "This process involves cleaning and transforming data to make it suitable for machine learning.",
+    "answer": "What is data preprocessing?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:48:14.928Z"
+  },
+  {
+    "category": "Data Diet",
+    "clue": "This method of data augmentation creates new training samples by randomly rotating existing images.",
+    "answer": "What is image rotation?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:48:31.212Z"
+  },
+  {
+    "category": "Culinary Combustion",
+    "clue": "This pepper, measured in Scoville Heat Units, is commonly used in spicy dishes.",
+    "answer": "What is a jalapeño?",
+    "rating": "bad",
+    "timestamp": "2025-04-10T01:48:43.610Z"
+  },
+  {
+    "category": "Culinary Combustion",
+    "clue": "This Indian curry is known for its rich, creamy texture and varying levels of spice.",
+    "answer": "What is Vindaloo?",
+    "rating": "bad",
+    "timestamp": "2025-04-10T01:48:53.945Z"
+  },
+  {
+    "category": "Culinary Combustion",
+    "clue": "This active compound gives chili peppers their heat.",
+    "answer": "What is capsaicin?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:49:04.776Z"
+  },
+  {
+    "category": "Culinary Combustion",
+    "clue": "This Sichuan peppercorn produces a unique tingling sensation in the mouth.",
+    "answer": "What is Sichuan pepper?",
+    "rating": "bad",
+    "timestamp": "2025-04-10T01:49:22.051Z"
+  },
+  {
+    "category": "Culinary Combustion",
+    "clue": "This Korean dish, featuring fermented vegetables and gochugaru, is known for its fiery kick.",
+    "answer": "What is kimchi jjigae?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:49:43.019Z"
+  },
+  {
+    "category": "Pawsitive Pals",
+    "clue": "This dog breed is famous for its black and white spotted coat.",
+    "answer": "What is a Dalmatian?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:50:38.961Z"
+  },
+  {
+    "category": "Pawsitive Pals",
+    "clue": "This common cat behavior involves kneading with their paws.",
+    "answer": "What is making biscuits?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:54:12.091Z"
+  },
+  {
+    "category": "Pawsitive Pals",
+    "clue": "This feline behavior, involving rubbing against objects, is a way of marking territory.",
+    "answer": "What is bunting?",
+    "rating": "good",
+    "timestamp": "2025-04-10T01:54:47.164Z"
+  },
+  {
+    "category": "World History",
+    "clue": "This clue worth $400 needs to be filled in",
+    "answer": "What is the answer?",
+    "rating": "good",
+    "timestamp": "2025-04-11T00:43:08.771Z"
+  },
+  {
+    "category": "Sports",
+    "clue": "This clue worth $200 needs to be filled in",
+    "answer": "What is the answer?",
+    "rating": "good",
+    "timestamp": "2025-04-11T00:52:54.683Z"
+  },
+  {
+    "category": "History's Untold Tales",
+    "clue": "This queen ruled the Ashanti Empire in the late 19th and early 20th centuries.",
+    "answer": "Who is Yaa Asantewaa?",
+    "rating": "good",
+    "timestamp": "2025-04-11T00:56:28.649Z"
+  }
+]
