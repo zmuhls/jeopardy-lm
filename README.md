@@ -81,7 +81,6 @@ JeopardyLM is an interactive, customizable Jeopardy-style game built with Next.j
 
 JeopardyLM supports multiple AI providers:
 
-- Claude (Anthropic)
 - GPT-4 (OpenAI)
 - Gemini (Google)
 - Llama (Meta)
