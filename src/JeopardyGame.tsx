@@ -1624,6 +1624,63 @@ export default function JeopardyGame() {
     }
   };
   
+  // Export game board to JSON file
+  const exportGameBoard = () => {
+    const exportData = {
+      name: `Jeopardy Board Export - ${new Date().toLocaleString()}`,
+      date: new Date().toISOString(),
+      gameState: gameState,
+      version: "1.0"
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `jeopardy-board-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    alert('Game board exported successfully!');
+  };
+  
+  // Import game board from JSON file
+  const importGameBoard = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const importedData = JSON.parse(content);
+        
+        // Validate the imported data structure
+        if (!importedData.gameState || !importedData.gameState.categories || !importedData.gameState.players) {
+          throw new Error('Invalid file format');
+        }
+        
+        if (window.confirm(`Import "${importedData.name || 'Unnamed Board'}"? Current game progress will be lost.`)) {
+          setGameState(importedData.gameState);
+          setSelectedQuestion(null);
+          setShowAnswer(false);
+          alert('Game board imported successfully!');
+        }
+      } catch (error) {
+        alert('Error importing file: Invalid JSON format or file structure');
+        console.error('Import error:', error);
+      }
+    };
+    
+    reader.readAsText(file);
+    // Clear the input so the same file can be selected again
+    event.target.value = '';
+  };
+  
   // Open player settings
   const openPlayerSettings = () => {
     setEditingPlayers([...gameState.players]); // Copy current players for editing
@@ -1720,6 +1777,18 @@ export default function JeopardyGame() {
             <button className="load-button" onClick={() => setShowLoadModal(true)}>
               📂 Load Board ({savedBoards.length})
             </button>
+            <button className="save-button" onClick={exportGameBoard}>
+              📤 Export Board
+            </button>
+            <label className="load-button" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              📥 Import Board
+              <input 
+                type="file" 
+                accept=".json"
+                onChange={importGameBoard}
+                style={{ display: 'none' }}
+              />
+            </label>
           </div>
           
           <select 
