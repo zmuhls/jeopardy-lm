@@ -1774,16 +1774,21 @@ export default function JeopardyGame() {
             Final Jeopardy
           </button>
           
-          {/* Import Control */}
-          <label className="import-button">
-            Import Board
-            <input 
-              type="file" 
-              accept=".json"
-              onChange={importGameBoard}
-              style={{ display: 'none' }}
-            />
-          </label>
+          {/* Export/Import Controls */}
+          <div className="export-import-controls">
+            <button className="export-button" onClick={exportGameBoard}>
+              Export Board
+            </button>
+            <label className="import-button">
+              Import Board
+              <input 
+                type="file" 
+                accept=".json"
+                onChange={importGameBoard}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
           
           <select 
             value={gameTheme} 
