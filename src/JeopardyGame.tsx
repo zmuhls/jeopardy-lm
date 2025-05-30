@@ -133,11 +133,6 @@ export default function JeopardyGame() {
   const [dailyDoubleWager, setDailyDoubleWager] = useState<number | null>(null);
   const [showDailyDoubleWager, setShowDailyDoubleWager] = useState(false);
   
-  // Save/Load functionality
-  const [savedBoards, setSavedBoards] = useState<{name: string, date: string, data: GameState}[]>([]);
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [showLoadModal, setShowLoadModal] = useState(false);
-  const [saveBoardName, setSaveBoardName] = useState('');
   
   // Board editing state
   const [showEditor, setShowEditor] = useState(false);
@@ -175,16 +170,6 @@ export default function JeopardyGame() {
       const savedTemperature = localStorage.getItem('jeopardy_temperature');
       if (savedTemperature) setTemperature(parseFloat(savedTemperature));
       
-      // Load saved boards from localStorage
-      const savedBoardsData = localStorage.getItem('jeopardy_saved_boards');
-      if (savedBoardsData) {
-        try {
-          const parsedBoards = JSON.parse(savedBoardsData);
-          setSavedBoards(parsedBoards);
-        } catch (e) {
-          // Silent error handling for saved board parsing
-        }
-      }
       
       // Load theme preference
       const savedTheme = localStorage.getItem('jeopardy_theme');
@@ -204,12 +189,6 @@ export default function JeopardyGame() {
     }
   }, [gameTheme]);
   
-  // Save boards to localStorage whenever savedBoards changes
-  useEffect(() => {
-    if (typeof window !== 'undefined' && savedBoards.length > 0) {
-      localStorage.setItem('jeopardy_saved_boards', JSON.stringify(savedBoards));
-    }
-  }, [savedBoards]);
   
   // Theme music functions have been temporarily removed
 
@@ -1577,75 +1556,56 @@ export default function JeopardyGame() {
     }
   };
   
-  // Save current game state
-  const saveCurrentGame = () => {
-    const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleString();
-    
-    if (!saveBoardName) {
-      setSaveBoardName(`Jeopardy Board ${formattedDate}`);
-    }
-    
-    const newSavedGame = {
-      name: saveBoardName || `Jeopardy Board ${formattedDate}`,
-      date: formattedDate,
-      data: { ...gameState }
-    };
-    
-    setSavedBoards(prev => [...prev, newSavedGame]);
-    setShowSaveModal(false);
-    setSaveBoardName('');
-    
-    // Show notification
-    alert(`Game saved as "${newSavedGame.name}"`);
-  };
-  
-  // Load a saved game
-  const loadGame = (index: number) => {
-    if (index >= 0 && index < savedBoards.length) {
-      const savedGame = savedBoards[index];
-      
-      if (window.confirm(`Load "${savedGame.name}"? Current game progress will be lost.`)) {
-        setGameState(savedGame.data);
-        setSelectedQuestion(null);
-        setShowAnswer(false);
-        setShowLoadModal(false);
-      }
-    }
-  };
-  
-  // Delete a saved game
-  const deleteSavedGame = (index: number, event: React.MouseEvent) => {
-    // Stop the click from bubbling up to the parent (which would load the game)
-    event.stopPropagation();
-    
-    if (window.confirm(`Delete "${savedBoards[index].name}"? This cannot be undone.`)) {
-      setSavedBoards(prev => prev.filter((_, i) => i !== index));
-    }
-  };
   
   // Export game board to JSON file
   const exportGameBoard = () => {
-    const exportData = {
-      name: `Jeopardy Board Export - ${new Date().toLocaleString()}`,
-      date: new Date().toISOString(),
-      gameState: gameState,
-      version: "1.0"
-    };
-    
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `jeopardy-board-${Date.now()}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    alert('Game board exported successfully!');
+    try {
+      const exportData = {
+        name: `Jeopardy Board Export - ${new Date().toLocaleString()}`,
+        date: new Date().toISOString(),
+        gameState: gameState,
+        version: "1.0"
+      };
+      
+      const dataStr = JSON.stringify(exportData, null, 2);
+      
+      // Check if data is too large (>10MB)
+      if (dataStr.length > 10 * 1024 * 1024) {
+        alert('Game board is too large to export. Please reduce the number of categories or questions.');
+        return;
+      }
+      
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      
+      // Use modern download approach
+      if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+        // Safari fallback
+        const newWindow = window.open();
+        if (newWindow) {
+          newWindow.document.write(`<pre>${dataStr}</pre>`);
+          newWindow.document.title = 'Jeopardy Board Export - Copy and Save as .json file';
+        }
+      } else {
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `jeopardy-board-${Date.now()}.json`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up immediately
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }
+      
+      console.log('Game board exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export game board. Please try again.');
+    }
   };
   
   // Import game board from JSON file
@@ -1653,32 +1613,77 @@ export default function JeopardyGame() {
     const file = event.target.files?.[0];
     if (!file) return;
     
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File is too large. Please select a file smaller than 10MB.');
+      event.target.value = '';
+      return;
+    }
+    
+    // Check file type
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      alert('Please select a valid JSON file.');
+      event.target.value = '';
+      return;
+    }
+    
     const reader = new FileReader();
+    
+    reader.onerror = () => {
+      alert('Error reading file. Please try again.');
+      event.target.value = '';
+    };
+    
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
+        
+        if (!content || content.trim() === '') {
+          throw new Error('File is empty');
+        }
+        
         const importedData = JSON.parse(content);
         
         // Validate the imported data structure
-        if (!importedData.gameState || !importedData.gameState.categories || !importedData.gameState.players) {
-          throw new Error('Invalid file format');
+        if (!importedData || typeof importedData !== 'object') {
+          throw new Error('Invalid file format - not a valid JSON object');
         }
         
-        if (window.confirm(`Import "${importedData.name || 'Unnamed Board'}"? Current game progress will be lost.`)) {
+        if (!importedData.gameState || !importedData.gameState.categories || !importedData.gameState.players) {
+          throw new Error('Invalid file format - missing required game data');
+        }
+        
+        // Additional validation
+        if (!Array.isArray(importedData.gameState.categories) || !Array.isArray(importedData.gameState.players)) {
+          throw new Error('Invalid file format - categories and players must be arrays');
+        }
+        
+        if (importedData.gameState.categories.length !== 6) {
+          throw new Error('Invalid file format - must have exactly 6 categories');
+        }
+        
+        const confirmMessage = `Import "${importedData.name || 'Unnamed Board'}"?\n\nThis will replace your current game board and all progress will be lost.`;
+        
+        if (window.confirm(confirmMessage)) {
           setGameState(importedData.gameState);
           setSelectedQuestion(null);
           setShowAnswer(false);
-          alert('Game board imported successfully!');
+          setIncorrectPlayers({});
+          setDailyDoubleWager(null);
+          setShowDailyDoubleWager(false);
+          console.log('Game board imported successfully');
         }
       } catch (error) {
-        alert('Error importing file: Invalid JSON format or file structure');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        alert(`Error importing file: ${errorMessage}`);
         console.error('Import error:', error);
+      } finally {
+        // Always clear the input
+        event.target.value = '';
       }
     };
     
     reader.readAsText(file);
-    // Clear the input so the same file can be selected again
-    event.target.value = '';
   };
   
   // Open player settings
@@ -1769,18 +1774,12 @@ export default function JeopardyGame() {
             Final Jeopardy
           </button>
           
-          {/* Save/Load Controls */}
-          <div className="save-load-controls">
-            <button className="save-button" onClick={() => setShowSaveModal(true)}>
-              💾 Save Board
-            </button>
-            <button className="load-button" onClick={() => setShowLoadModal(true)}>
-              📂 Load Board ({savedBoards.length})
-            </button>
-            <button className="save-button" onClick={exportGameBoard}>
+          {/* Export/Import Controls */}
+          <div className="export-import-controls">
+            <button className="export-button" onClick={exportGameBoard}>
               📤 Export Board
             </button>
-            <label className="load-button" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <label className="import-button">
               📥 Import Board
               <input 
                 type="file" 
@@ -2143,64 +2142,6 @@ export default function JeopardyGame() {
         ))}
       </div>
       
-      {/* Save Game Modal */}
-      {showSaveModal && (
-        <div className="settings-modal">
-          <div className="settings-content">
-            <h2>Save Game Board</h2>
-            <div className="form-group">
-              <label>Save Name:</label>
-              <input 
-                type="text" 
-                value={saveBoardName} 
-                onChange={(e) => setSaveBoardName(e.target.value)} 
-                placeholder="My Custom Jeopardy Board"
-                autoFocus
-              />
-            </div>
-            <div className="button-group">
-              <button onClick={saveCurrentGame}>Save</button>
-              <button onClick={() => setShowSaveModal(false)}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Load Game Modal */}
-      {showLoadModal && (
-        <div className="settings-modal">
-          <div className="settings-content">
-            <h2>Load Saved Game</h2>
-            {savedBoards.length > 0 ? (
-              <div className="saved-boards-list">
-                {savedBoards.map((board, index) => (
-                  <div 
-                    key={index} 
-                    className="saved-board-item"
-                    onClick={() => loadGame(index)}
-                  >
-                    <div className="saved-board-info">
-                      <h3>{board.name}</h3>
-                      <p className="saved-date">Saved on: {board.date}</p>
-                    </div>
-                    <button 
-                      className="delete-board-button"
-                      onClick={(e) => deleteSavedGame(index, e)}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-saved-boards">No saved boards found.</p>
-            )}
-            <div className="button-group">
-              <button onClick={() => setShowLoadModal(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Category Editor Modal */}
       {editingCategory && (
         <div className="editor-modal">

@@ -749,30 +749,61 @@ button:hover:after {
   margin-top: 30px;
 }
 
-/* Save/Load controls */
-.save-load-controls {
+/* Export/Import controls */
+.export-import-controls {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin: 5px 0;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.save-button, .load-button {
+.export-button, .import-button {
   padding: 8px 15px;
   font-size: 0.95rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--jeopardy-blue);
+  color: white;
+  border: 2px solid var(--jeopardy-gold);
+  border-radius: 4px;
+  font-weight: bold;
+  margin: 5px;
+  text-decoration: none;
+  font-family: inherit;
 }
 
-.save-button {
+.export-button {
   background-color: #2e7d32;
   border-color: #81c784;
 }
 
-.load-button {
+.export-button:hover {
+  background-color: #1b5e20;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.import-button {
   background-color: #1565c0;
   border-color: #64b5f6;
+}
+
+.import-button:hover {
+  background-color: #0d47a1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.export-button:active, .import-button:active {
+  transform: scale(0.96);
 }
 
 /* Saved boards list styles */
