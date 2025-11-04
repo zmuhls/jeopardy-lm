@@ -82,42 +82,6 @@ button:hover:after {
   position: relative;
 }
 
-.edition-strip {
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  background: linear-gradient(
-    90deg,
-    #ffd700,
-    #ffed4e,
-    #fff9c4,
-    #ffed4e,
-    #ffd700
-  );
-  background-size: 200% 100%;
-  animation: waveGradient 4s ease-in-out infinite;
-  color: #0d47a1;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 0.9rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 215, 0, 0.4);
-  z-index: 10;
-  letter-spacing: 0.5px;
-}
-
-@keyframes waveGradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
 .game-title {
   text-align: center;
   color: var(--jeopardy-gold);

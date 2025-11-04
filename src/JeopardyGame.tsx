@@ -1905,9 +1905,6 @@ export default function JeopardyGame() {
     <div className={`jeopardy-game ${gameTheme}`}>
       {/* Game Board */}
       <div className="game-board">
-        {/* Edition Strip */}
-        <div className="edition-strip">OpenEd25 Edition</div>
-
         <h1 className="game-title">Jeopardy!</h1>
 
         {/* Settings and controls */}
