@@ -123,7 +123,7 @@ export default function JeopardyGame() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [aiProvider, setAiProvider] = useState<'openrouter' | 'ollama'>('openrouter');
   const [apiKey, setApiKey] = useState('');
-  const [modelId, setModelId] = useState('');
+  const [modelId, setModelId] = useState('google/gemini-2.5-flash-lite');
   const [ollamaModel, setOllamaModel] = useState('');
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
   const [temperature, setTemperature] = useState(0.7);
