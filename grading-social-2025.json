@@ -1,0 +1,400 @@
+{
+  "name": "Jeopardy Board Export - 12/16/2025, 4:08:28 PM",
+  "date": "2025-12-16T21:08:28.816Z",
+  "gameState": {
+    "categories": [
+      {
+        "title": "Big Apple Academics",
+        "questions": [
+          {
+            "text": "This Manhattan CUNY college’s Latin motto Mihi Cura Futuri means “The care of the future is mine”",
+            "answer": "What is Hunter College?",
+            "value": 200,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": null,
+            "ratings": []
+          },
+          {
+            "text": "Queen Latifah is a notable graduate of this community college located in the Tribeca and Financial District neighborhoods of Lower Manhattan",
+            "answer": "What is Borough of Manhattan Community College?",
+            "value": 400,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: community, college, manhattan",
+            "ratings": []
+          },
+          {
+            "text": "This criminal-justice college’s alumnus Eric Adams (a former NYPD captain) became New York City’s 110th mayor in 2022",
+            "answer": "What is John Jay College of Criminal Justice?",
+            "value": 600,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": null,
+            "ratings": []
+          },
+          {
+            "text": "Jonas Salk, developer of the polio vaccine, graduated from this Harlem-based CUNY college",
+            "answer": "What is City College of New York?",
+            "value": 800,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college",
+            "ratings": []
+          },
+          {
+            "text": "The 17-story Newman Vertical Campus, home to the Zicklin School of Business, is the main academic building of this Midtown college",
+            "answer": "What is Baruch College?",
+            "value": 1000,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college",
+            "ratings": []
+          }
+        ],
+        "difficultyAdjustments": {
+          "200": 0,
+          "400": 0,
+          "600": 0,
+          "800": 0,
+          "1000": 0
+        }
+      },
+      {
+        "title": "Brooklyn's Bright Minds",
+        "questions": [
+          {
+            "text": "Actor Chris Rock attended this Brooklyn community college for a year before his entertainment career",
+            "answer": "What is Kingsborough Community College?",
+            "value": 200,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: community, college",
+            "ratings": []
+          },
+          {
+            "text": "Future U.S. Senator Bernie Sanders enrolled at this college in Brooklyn in 1959 (though he did not graduate it)",
+            "answer": "What is Brooklyn College?",
+            "value": 400,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college, brooklyn",
+            "ratings": []
+          },
+          {
+            "text": "EGOT-winning director Mel Brooks is an alumnus of this CUNY college in Brooklyn",
+            "answer": "What is Brooklyn College?",
+            "value": 600,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college, brooklyn",
+            "ratings": []
+          },
+          {
+            "text": "This Downtown Brooklyn college, founded in 1946 and commonly called City Tech, sports the Yellow Jackets as its athletic nickname",
+            "answer": "What is New York City College of Technology?",
+            "value": 800,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college, city",
+            "ratings": []
+          },
+          {
+            "text": "This CUNY institution in Brooklyn is known for its strong programs in the performing arts and liberal arts, and its campus is often used for filming",
+            "answer": "What is Brooklyn College?",
+            "value": 1000,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": true,
+            "ruleViolation": "Answer contains words from the clue or category: brooklyn",
+            "ratings": []
+          }
+        ],
+        "difficultyAdjustments": {
+          "200": 0,
+          "400": 0,
+          "600": 0,
+          "800": 0,
+          "1000": 0
+        }
+      },
+      {
+        "title": "Queens' Collegiate Crowns",
+        "questions": [
+          {
+            "text": "This Queens campus’s motto is Discimus ut serviamus (Latin for “We learn so that we may serve”)",
+            "answer": "What is Queens College?",
+            "value": 200,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: queens",
+            "ratings": []
+          },
+          {
+            "text": "Comedian Jerry Seinfeld is a notable alumnus of this CUNY college in Queens",
+            "answer": "What is Queens College?",
+            "value": 400,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college, queens",
+            "ratings": []
+          },
+          {
+            "text": "“Law in the service of human needs” is the motto of this public-interest law school in Long Island City, Queens",
+            "answer": "What is CUNY School of Law?",
+            "value": 600,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: law, school",
+            "ratings": []
+          },
+          {
+            "text": "Founded in 1966 as part of CUNY’s expansion, it was the first new senior college created under the CUNY system",
+            "answer": "What is York College?",
+            "value": 800,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college",
+            "ratings": []
+          },
+          {
+            "text": "The sports teams of this college are nicknamed the Knights",
+            "answer": "What is Queens College?",
+            "value": 1000,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college",
+            "ratings": []
+          }
+        ],
+        "difficultyAdjustments": {
+          "200": 0,
+          "400": 0,
+          "600": 0,
+          "800": 0,
+          "1000": 0
+        }
+      },
+      {
+        "title": "Bronx Brainpower",
+        "questions": [
+          {
+            "text": "This Bronx senior college is named for Herbert H. Lehman, a former New York governor and U.S. senator",
+            "answer": "What is Lehman College?",
+            "value": 200,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college, lehman",
+            "ratings": []
+          },
+          {
+            "text": "Founded in 1931 as Hunter College’s Bronx campus, it became an independent CUNY college in 1968",
+            "answer": "What is Lehman College?",
+            "value": 400,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college",
+            "ratings": []
+          },
+          {
+            "text": "The athletic teams of this Bronx college are nicknamed the Lightning Bugs",
+            "answer": "What is Lehman College?",
+            "value": 600,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: college",
+            "ratings": []
+          },
+          {
+            "text": "In 1946, the first-ever U.N. Security Council meeting outside of the United Nations was held at its Bronx campus",
+            "answer": "What is Lehman College?",
+            "value": 800,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": null,
+            "ratings": []
+          },
+          {
+            "text": "Established in 1968 to serve the Puerto Rican community of the South Bronx, this college (named for educator Eugenio María de Hostos) is CUNY’s first bilingual college and uniquely offers an accredited game-design degree",
+            "answer": "What is Eugenio María de Hostos Community College?",
+            "value": 1000,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: community, college, eugenio, maría, hostos, college",
+            "ratings": []
+          }
+        ],
+        "difficultyAdjustments": {
+          "200": 0,
+          "400": 0,
+          "600": 0,
+          "800": 0,
+          "1000": 0
+        }
+      },
+      {
+        "title": "Staten Island Scholars",
+        "questions": [
+          {
+            "text": "The College of Staten Island’s motto is Opportunity and Challenge",
+            "answer": "What is the College of Staten Island?",
+            "value": 200,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: staten, island, the, college, staten",
+            "ratings": []
+          },
+          {
+            "text": "This Staten Island college was formed by merging Staten Island Community College and Richmond College in 1976",
+            "answer": "What is the College of Staten Island?",
+            "value": 400,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: staten, island, staten, island, college, staten, island, college, college",
+            "ratings": []
+          },
+          {
+            "text": "The athletic teams of this college are known as the Dolphins",
+            "answer": "What is the College of Staten Island?",
+            "value": 600,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: staten, island, the, college, the",
+            "ratings": []
+          },
+          {
+            "text": "It is one of only two CUNY four-year colleges that offers engineering degree programs",
+            "answer": "What is the College of Staten Island?",
+            "value": 800,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: staten, island",
+            "ratings": []
+          },
+          {
+            "text": "The college’s main campus is in Willowbrook, and it also maintains a campus in the St. George neighborhood",
+            "answer": "What is the College of Staten Island?",
+            "value": 1000,
+            "revealed": false,
+            "answered": false,
+            "dailyDouble": false,
+            "ruleViolation": "Answer contains words from the clue or category: staten, island, the, the",
+            "ratings": []
+          }
+        ],
+        "difficultyAdjustments": {
+          "200": 0,
+          "400": 0,
+          "600": 0,
+          "800": 0,
+          "1000": 0
+        }
+      },
+      {
+  "title": "CUNY System Lore",
+  "questions": [
+    {
+      "text": "CUNY can trace its origins to the 1847 founding of this institution, created to provide tuition-free higher education to the children of immigrants and working-class New Yorkers",
+      "answer": "What is the Free Academy?",
+      "value": 200,
+      "revealed": false,
+      "answered": false,
+      "dailyDouble": false,
+      "ruleViolation": null,
+      "ratings": []
+    },
+    {
+      "text": "The adoption of this admissions policy in 1970 made CUNY a national testing ground for debates about access, remediation, assessment, and academic labor",
+      "answer": "What is Open Admissions?",
+      "value": 400,
+      "revealed": false,
+      "answered": false,
+      "dailyDouble": false,
+      "ruleViolation": null,
+      "ratings": []
+    },
+    {
+      "text": "In April 1961, state legislation signed by this governor reorganized New York City’s municipal colleges into the City University of New York",
+      "answer": "Who is Nelson A. Rockefeller?",
+      "value": 600,
+      "revealed": false,
+      "answered": false,
+      "dailyDouble": false,
+      "ruleViolation": null,
+      "ratings": []
+    },
+    {
+      "text": "Created by New York State legislation in 1926, this body governed the municipal colleges and later became CUNY’s Board of Trustees in 1979",
+      "answer": "What is the Board of Higher Education of the City of New York?",
+      "value": 800,
+      "revealed": false,
+      "answered": false,
+      "dailyDouble": false,
+      "ruleViolation": null,
+      "ratings": []
+    },
+    {
+      "text": "In 1959, the Board of Higher Education appointed a Committee on the Chancellor and recommended this individual as CUNY’s first chancellor",
+      "answer": "Who is John Everett?",
+      "value": 1000,
+      "revealed": false,
+      "answered": false,
+      "dailyDouble": false,
+      "ruleViolation": null,
+      "ratings": []
+    }
+  ],
+  "difficultyAdjustments": {
+    "200": 0,
+    "400": 0,
+    "600": 0,
+    "800": 0,
+    "1000": 0
+  }
+}
+    ],
+    "players": [
+      {
+        "name": "Player 1",
+        "score": 0,
+        "active": true
+      },
+      {
+        "name": "Player 2",
+        "score": 0,
+        "active": false
+      },
+      {
+        "name": "Player 3",
+        "score": 0,
+        "active": false
+      }
+    ],
+    "currentPlayer": 0,
+    "finalJeopardyActive": false
+  },
+  "version": "1.0"
+}
