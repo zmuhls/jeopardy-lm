@@ -1,19 +1,25 @@
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
+import { Barlow_Condensed, IBM_Plex_Mono } from 'next/font/google';
 import ErrorBoundary from '../src/ErrorBoundary';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+
+const displayFont = Barlow_Condensed({
+  subsets: ['latin'],
+  weight: ['600', '700'],
+  variable: '--font-display',
+});
+
+const monoFont = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  variable: '--font-mono',
+});
 
 export default function MyApp({ Component, pageProps }: AppProps) {
-  // Use client-side only rendering to avoid hydration issues with audio elements
-  const [isClient, setIsClient] = useState(false);
-  
   useEffect(() => {
-    setIsClient(true);
-    
-    // Global error handler for unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       console.error('Unhandled promise rejection:', event.reason);
-      // Prevent the default browser behavior (console error)
       event.preventDefault();
     };
 
@@ -24,16 +30,11 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     };
   }, []);
 
-  if (!isClient) {
-    // Return a simple loading state during SSR to avoid hydration issues
-    return <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="animate-pulse text-white text-2xl">Loading Jeopardy AI...</div>
-    </div>;
-  }
-
   return (
-    <ErrorBoundary>
-      <Component {...pageProps} />
-    </ErrorBoundary>
+    <div className={`${displayFont.variable} ${monoFont.variable}`}>
+      <ErrorBoundary>
+        <Component {...pageProps} />
+      </ErrorBoundary>
+    </div>
   );
 }

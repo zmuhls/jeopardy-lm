@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export",
-    "export": "next export",
-    "start": "npx serve@latest out",
+    "build": "next build",
+    "start": "next start",
+    "seed:admin": "node scripts/seed-admin.js",
     "lint": "next lint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -14,8 +14,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.13.14",
     "@types/react": "^19.0.12",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.485.0",
     "next": "^13.5.11",
     "react": "^18.3.1",
