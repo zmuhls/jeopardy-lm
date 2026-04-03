@@ -24,9 +24,10 @@ JeopardyLM is an interactive, customizable Jeopardy-style game built with Next.j
 
 ### Core Components
 - **`src/JeopardyGame.tsx`**: Main game component containing all game logic, state management, and UI
-- **`src/App.tsx`**: Application wrapper with client-side rendering logic
+- **`src/AISettingsModal.tsx`**: Lazily loaded AI configuration and board generation workflow
+- **`src/jeopardyDefaults.ts`** / **`src/jeopardyTypes.ts`**: Shared board defaults and TypeScript models
 - **`src/ErrorBoundary.tsx`**: Error boundary component for graceful error handling
-- **`pages/_app.tsx`**: Next.js app wrapper with global error handling and client-side rendering
+- **`pages/_app.tsx`**: Next.js app wrapper with global error handling and `next/font` setup
 
 ### Game State Management
 The game uses React's `useState` with complex state objects:
@@ -60,8 +61,8 @@ The game uses React's `useState` with complex state objects:
 
 ## Development Notes
 
-### Client-Side Rendering Pattern
-Both `src/App.tsx` and `pages/_app.tsx` implement client-side rendering patterns using `useState` and `useEffect` to avoid hydration mismatches. This is critical for audio elements and dynamic content.
+### Rendering Pattern
+The app now renders through `pages/_app.tsx` and `pages/index.tsx` without the extra `src/App.tsx` client-only wrapper. Board features that are not needed on first paint, such as AI configuration, are split into on-demand modules.
 
 ### Error Handling
 - Global error boundaries catch React errors
