@@ -1,11 +1,68 @@
 import dynamic from 'next/dynamic';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, memo, useEffect, useState } from 'react';
 
 import { initializeCategories, initializePlayers } from './jeopardyDefaults';
 import { logBadResponse, validateQuestionRule } from './questionValidation';
-import type { Category, GameState, IncorrectPlayers, Player, Rating } from './jeopardyTypes';
+import type { Category, GameState, IncorrectPlayers, Player, Question, Rating } from './jeopardyTypes';
 
 const AISettingsModal = dynamic(() => import('./AISettingsModal'));
+
+function getPasswordStrength(pw: string): { score: number; label: string; color: string } {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 1) return { score, label: 'Weak', color: '#ef4444' };
+  if (score === 2) return { score, label: 'Fair', color: '#f97316' };
+  if (score === 3) return { score, label: 'Good', color: '#eab308' };
+  if (score === 4) return { score, label: 'Strong', color: '#22c55e' };
+  return { score, label: 'Very Strong', color: '#00e5ff' };
+}
+
+const QuestionCell = memo(function QuestionCell({
+  question,
+  category,
+  categoryIndex,
+  questionIndex,
+  showEditor,
+  onSelect,
+  onEdit,
+}: {
+  question: Question;
+  category: Category;
+  categoryIndex: number;
+  questionIndex: number;
+  showEditor: boolean;
+  onSelect: (ci: number, qi: number) => void;
+  onEdit: (ci: number, qi: number) => void;
+}) {
+  return (
+    <div
+      className={`question-cell ${question.answered ? 'answered' : ''} ${showEditor ? 'editable' : ''} ${question.dailyDouble && question.revealed ? 'daily-double' : ''}`}
+      onClick={() => showEditor ? onEdit(categoryIndex, questionIndex) : onSelect(categoryIndex, questionIndex)}
+    >
+      <div className="question-value-container">
+        {question.answered && !showEditor ? '' : (
+          <>
+            {`$${question.value}`}
+            {question.dailyDouble && !question.answered && showEditor && (
+              <div className="daily-double-indicator">DD</div>
+            )}
+            {showEditor && category.difficultyAdjustments && category.difficultyAdjustments[question.value] !== 0 && (
+              <div className={`difficulty-indicator ${category.difficultyAdjustments[question.value] > 0 ? 'harder' : 'easier'}`}>
+                {category.difficultyAdjustments[question.value] > 0 ? '↑' : '↓'}
+                {Math.abs(category.difficultyAdjustments[question.value])}
+              </div>
+            )}
+          </>
+        )}
+        {showEditor && <div className="edit-icon">✏️</div>}
+      </div>
+    </div>
+  );
+});
 
 export default function JeopardyGame() {
   // Game state
@@ -69,20 +126,6 @@ export default function JeopardyGame() {
       if (data) setAuthUser(data);
     }).catch(() => {});
   }, []);
-
-  const getPasswordStrength = (pw: string): { score: number; label: string; color: string } => {
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (pw.length >= 12) score++;
-    if (/[A-Z]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    if (score <= 1) return { score, label: 'Weak', color: '#ef4444' };
-    if (score === 2) return { score, label: 'Fair', color: '#f97316' };
-    if (score === 3) return { score, label: 'Good', color: '#eab308' };
-    if (score === 4) return { score, label: 'Strong', color: '#22c55e' };
-    return { score, label: 'Very Strong', color: '#00e5ff' };
-  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -563,6 +606,12 @@ export default function JeopardyGame() {
     });
   };
   
+  // Stable callbacks for memoized QuestionCell — skip re-renders during auth/UI state changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleQuestionSelectCb = useCallback(handleQuestionSelect, [gameState]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleEditQuestionCb = useCallback(handleEditQuestion, [gameState, showEditor]);
+
   // Save edited question
   const saveQuestion = () => {
     if (!editingQuestion) return;
@@ -838,27 +887,40 @@ export default function JeopardyGame() {
 
         {/* Settings and controls */}
         <div className="game-controls">
-          <button onClick={() => setShowSettings(!showSettings)}>
-            Config
-          </button>
-          <button onClick={() => setShowEditor(!showEditor)}>
-            {showEditor ? 'Close Editor' : 'Edit Board'}
-          </button>
-          <button onClick={openPlayerSettings}>
-            Players ({gameState.players.length})
-          </button>
-          <button onClick={resetGame}>Reset Game</button>
-          <button onClick={activateFinalJeopardy} disabled={gameState.finalJeopardyActive}>
-            Final Jeopardy
-          </button>
-          
-          {/* Export/Import Controls */}
-          <div className="export-import-controls">
+          {/* Board group: editing tools */}
+          <div className="ctrl-group">
+            <button onClick={() => setShowEditor(!showEditor)}>
+              {showEditor ? 'Close Editor' : 'Edit Board'}
+            </button>
+            <button onClick={openPlayerSettings}>
+              Players ({gameState.players.length})
+            </button>
+          </div>
+
+          {/* Settings group: AI config + theme */}
+          <div className="ctrl-group">
+            <button onClick={() => setShowSettings(!showSettings)}>
+              AI Config
+            </button>
+            <select
+              value={gameTheme}
+              onChange={(e) => setGameTheme(e.target.value)}
+              className="theme-selector"
+              aria-label="Theme"
+            >
+              <option value="standard">Standard</option>
+              <option value="dark">Dark</option>
+              <option value="retro">Retro</option>
+            </select>
+          </div>
+
+          {/* Data group: export / import / cloud */}
+          <div className="ctrl-group">
             <button className="export-button" onClick={exportGameBoard}>
-              Export Board
+              Export
             </button>
             <label className="import-button">
-              Import Board
+              Import
               <input
                 type="file"
                 accept=".json"
@@ -866,14 +928,10 @@ export default function JeopardyGame() {
                 style={{ display: 'none' }}
               />
             </label>
-          </div>
-
-          {/* Auth / Cloud Boards */}
-          <div className="cloud-boards-controls">
             {authUser ? (
               <>
                 <button className="cloud-btn" onClick={openBoards}>My Boards</button>
-                <button className="cloud-btn" onClick={() => setShowSaveBoard(true)}>Save Board</button>
+                <button className="cloud-btn" onClick={() => setShowSaveBoard(true)}>Save</button>
                 <span className="cloud-username">{authUser.username}</span>
                 <button className="cloud-btn cloud-btn-logout" onClick={handleLogout}>Sign Out</button>
               </>
@@ -883,16 +941,14 @@ export default function JeopardyGame() {
               </button>
             )}
           </div>
-          
-          <select 
-            value={gameTheme} 
-            onChange={(e) => setGameTheme(e.target.value)}
-            className="theme-selector"
-          >
-            <option value="standard">Standard Theme</option>
-            <option value="dark">Dark Theme</option>
-            <option value="retro">Retro Theme</option>
-          </select>
+
+          {/* Game flow group: main actions */}
+          <div className="ctrl-group">
+            <button className="btn-primary" onClick={activateFinalJeopardy} disabled={gameState.finalJeopardyActive}>
+              Final Jeopardy
+            </button>
+            <button className="btn-danger" onClick={resetGame}>Reset</button>
+          </div>
         </div>
         
         
@@ -938,44 +994,18 @@ export default function JeopardyGame() {
             {/* Questions Grid */}
             {[0, 1, 2, 3, 4].map(questionIndex => (
               <div key={questionIndex} className="questions-row">
-                {gameState.categories.map((category, categoryIndex) => {
-                  const question = category.questions[questionIndex];
-                  return (
-                    <div 
-                      key={`${categoryIndex}-${questionIndex}`} 
-                      className={`question-cell ${question.answered ? 'answered' : ''} ${showEditor ? 'editable' : ''} ${question.dailyDouble && question.revealed ? 'daily-double' : ''}`}
-                      onClick={() => {
-                        if (showEditor) {
-                          handleEditQuestion(categoryIndex, questionIndex);
-                        } else {
-                          handleQuestionSelect(categoryIndex, questionIndex);
-                        }
-                      }}
-                    >
-                      <div className="question-value-container">
-                        {question.answered && !showEditor ? '' : (
-                          <>
-                            {`$${question.value}`}
-                            {/* Daily Double indicator only shown in editor mode or after it's been revealed */}
-                            {question.dailyDouble && !question.answered && showEditor && (
-                              <div className="daily-double-indicator">DD</div>
-                            )}
-                            {/* Difficulty adjustment indicator - only shown in editor mode */}
-                            {showEditor && category.difficultyAdjustments && category.difficultyAdjustments[question.value] !== 0 && (
-                              <div className={`difficulty-indicator ${category.difficultyAdjustments[question.value] > 0 ? 'harder' : 'easier'}`}>
-                                {category.difficultyAdjustments[question.value] > 0 ? '↑' : '↓'}
-                                {Math.abs(category.difficultyAdjustments[question.value])}
-                              </div>
-                            )}
-                          </>
-                        )}
-                        {showEditor && (
-                          <div className="edit-icon">✏️</div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {gameState.categories.map((category, categoryIndex) => (
+                  <QuestionCell
+                    key={`${categoryIndex}-${questionIndex}`}
+                    question={category.questions[questionIndex]}
+                    category={category}
+                    categoryIndex={categoryIndex}
+                    questionIndex={questionIndex}
+                    showEditor={showEditor}
+                    onSelect={handleQuestionSelectCb}
+                    onEdit={handleEditQuestionCb}
+                  />
+                ))}
               </div>
             ))}
           </>
@@ -1059,8 +1089,8 @@ export default function JeopardyGame() {
                   
                   <div className="question-controls">
                     <div className="button-row">
-                      <button onClick={toggleShowAnswer}>
-                        {showAnswer ? 'Hide Response' : 'Show Response'}
+                      <button className={showAnswer ? 'btn-ghost' : 'btn-primary'} onClick={toggleShowAnswer}>
+                        {showAnswer ? 'Hide Response' : 'Reveal Response'}
                       </button>
                       
                       {showAnswer && (
@@ -1165,7 +1195,7 @@ export default function JeopardyGame() {
             key={index} 
             className={`player ${index === gameState.currentPlayer ? 'active' : ''}`}
           >
-            <h3>{player.name}</h3>
+            <p className="player-name">{player.name}</p>
             <p className="score">${player.score}</p>
           </div>
         ))}
@@ -1186,8 +1216,8 @@ export default function JeopardyGame() {
               />
             </div>
             <div className="button-group">
-              <button onClick={saveCategory}>Save</button>
-              <button onClick={() => setEditingCategory(null)}>Cancel</button>
+              <button className="btn-ghost" onClick={() => setEditingCategory(null)}>Cancel</button>
+              <button className="btn-primary" onClick={saveCategory}>Save</button>
             </div>
           </div>
         </div>
@@ -1245,8 +1275,8 @@ export default function JeopardyGame() {
               </div>
             </div>
             <div className="button-group">
-              <button onClick={saveQuestion}>Save</button>
-              <button onClick={() => setEditingQuestion(null)}>Cancel</button>
+              <button className="btn-ghost" onClick={() => setEditingQuestion(null)}>Cancel</button>
+              <button className="btn-primary" onClick={saveQuestion}>Save</button>
             </div>
           </div>
         </div>
@@ -1453,8 +1483,8 @@ export default function JeopardyGame() {
             ))}
             
             <div className="button-group">
-              <button onClick={savePlayerSettings}>Save Players</button>
-              <button onClick={() => setShowPlayerSettings(false)}>Cancel</button>
+              <button className="btn-ghost" onClick={() => setShowPlayerSettings(false)}>Cancel</button>
+              <button className="btn-primary" onClick={savePlayerSettings}>Save Players</button>
             </div>
           </div>
         </div>
