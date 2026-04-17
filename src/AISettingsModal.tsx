@@ -256,7 +256,7 @@ export default function AISettingsModal({
 }: AISettingsModalProps) {
   const [aiProvider, setAiProvider] = useState<AIProvider>('openrouter');
   const [apiKey, setApiKey] = useState('');
-  const [modelId, setModelId] = useState('google/gemini-2.5-flash-lite');
+  const [modelId, setModelId] = useState('google/gemini-3.1-flash-lite-preview');
   const [ollamaModel, setOllamaModel] = useState('');
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
   const [temperature, setTemperature] = useState(0.7);
@@ -824,15 +824,12 @@ export default function AISettingsModal({
                 className="ai-input"
               />
               <div className="model-chip-section">
-                <div className="model-chip-group-label">Google</div>
+                <div className="model-chip-group-label">Gemini 3</div>
                 <div className="model-chip-grid">
                   {[
-                    'google/gemini-2.5-flash-lite',
-                    'google/gemini-2.5-flash',
-                    'google/gemini-2.0-flash-001',
-                    'google/gemini-flash-1.5',
-                    'google/gemma-3-27b',
-                    'google/gemma-3-12b',
+                    'google/gemini-3.1-flash-lite-preview',
+                    'google/gemini-3-flash-preview',
+                    'google/gemini-3.1-pro-preview',
                   ].map((model) => (
                     <button
                       key={model}
@@ -843,13 +840,11 @@ export default function AISettingsModal({
                     </button>
                   ))}
                 </div>
-                <div className="model-chip-group-label">OpenAI</div>
+                <div className="model-chip-group-label">Gemma 4</div>
                 <div className="model-chip-grid">
                   {[
-                    'openai/gpt-4.1-mini',
-                    'openai/gpt-4.1-nano',
-                    'openai/gpt-4o-mini',
-                    'openai/gpt-4.1',
+                    'google/gemma-4-31b-it',
+                    'google/gemma-4-26b-a4b-it',
                   ].map((model) => (
                     <button
                       key={model}
@@ -860,12 +855,12 @@ export default function AISettingsModal({
                     </button>
                   ))}
                 </div>
-                <div className="model-chip-group-label">Anthropic</div>
+                <div className="model-chip-group-label">MiniMax &amp; Kimi</div>
                 <div className="model-chip-grid">
                   {[
-                    'anthropic/claude-3.5-haiku',
-                    'anthropic/claude-3-haiku',
-                    'anthropic/claude-sonnet-4-5',
+                    'minimax/minimax-m2.7',
+                    'minimax/minimax-m2.5',
+                    'moonshotai/kimi-k2.5',
                   ].map((model) => (
                     <button
                       key={model}
@@ -876,13 +871,12 @@ export default function AISettingsModal({
                     </button>
                   ))}
                 </div>
-                <div className="model-chip-group-label">DeepSeek &amp; Open</div>
+                <div className="model-chip-group-label">Qwen 3.5</div>
                 <div className="model-chip-grid">
                   {[
-                    'deepseek/deepseek-chat-v3.1',
-                    'meta-llama/llama-3.3-70b-instruct',
-                    'mistralai/mistral-7b-instruct',
-                    'qwen/qwen3-235b-a22b',
+                    'qwen/qwen3.5-397b-a17b',
+                    'qwen/qwen3.5-122b-a10b',
+                    'qwen/qwen3.5-35b-a3b',
                   ].map((model) => (
                     <button
                       key={model}
