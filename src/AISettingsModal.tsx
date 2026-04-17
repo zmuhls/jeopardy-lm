@@ -769,9 +769,6 @@ export default function AISettingsModal({
         <div className="ai-settings-header">
           <div>
             <h2 className="ai-settings-title">AI Configuration</h2>
-            <p className="ai-settings-subtitle">
-              {aiProvider === 'openrouter' ? 'OpenRouter — Cloud API' : 'Ollama — Local Inference'}
-            </p>
           </div>
           <button className="ai-settings-close" onClick={onClose} aria-label="Close">
             &#x2715;
@@ -829,7 +826,14 @@ export default function AISettingsModal({
               <div className="model-chip-section">
                 <div className="model-chip-group-label">Google</div>
                 <div className="model-chip-grid">
-                  {['google/gemini-2.5-flash-lite', 'google/gemini-2.0-flash-001', 'google/gemma-3-27b'].map((model) => (
+                  {[
+                    'google/gemini-2.5-flash-lite',
+                    'google/gemini-2.5-flash',
+                    'google/gemini-2.0-flash-001',
+                    'google/gemini-flash-1.5',
+                    'google/gemma-3-27b',
+                    'google/gemma-3-12b',
+                  ].map((model) => (
                     <button
                       key={model}
                       className={`model-chip${modelId === model ? ' selected' : ''}`}
@@ -841,7 +845,12 @@ export default function AISettingsModal({
                 </div>
                 <div className="model-chip-group-label">OpenAI</div>
                 <div className="model-chip-grid">
-                  {['openai/gpt-4.1-mini', 'openai/gpt-5-nano', 'openai/gpt-oss-120b'].map((model) => (
+                  {[
+                    'openai/gpt-4.1-mini',
+                    'openai/gpt-4.1-nano',
+                    'openai/gpt-4o-mini',
+                    'openai/gpt-4.1',
+                  ].map((model) => (
                     <button
                       key={model}
                       className={`model-chip${modelId === model ? ' selected' : ''}`}
@@ -851,9 +860,30 @@ export default function AISettingsModal({
                     </button>
                   ))}
                 </div>
-                <div className="model-chip-group-label">DeepSeek &amp; Others</div>
+                <div className="model-chip-group-label">Anthropic</div>
                 <div className="model-chip-grid">
-                  {['deepseek/deepseek-chat-v3.1', 'anthropic/claude-3.5-haiku', 'qwen/qwen3-235b-a22b-2507'].map((model) => (
+                  {[
+                    'anthropic/claude-3.5-haiku',
+                    'anthropic/claude-3-haiku',
+                    'anthropic/claude-sonnet-4-5',
+                  ].map((model) => (
+                    <button
+                      key={model}
+                      className={`model-chip${modelId === model ? ' selected' : ''}`}
+                      onClick={() => { setModelId(model); setTestResult(null); }}
+                    >
+                      {model.split('/')[1]}
+                    </button>
+                  ))}
+                </div>
+                <div className="model-chip-group-label">DeepSeek &amp; Open</div>
+                <div className="model-chip-grid">
+                  {[
+                    'deepseek/deepseek-chat-v3.1',
+                    'meta-llama/llama-3.3-70b-instruct',
+                    'mistralai/mistral-7b-instruct',
+                    'qwen/qwen3-235b-a22b',
+                  ].map((model) => (
                     <button
                       key={model}
                       className={`model-chip${modelId === model ? ' selected' : ''}`}
@@ -926,7 +956,7 @@ export default function AISettingsModal({
             value={systemMessage}
             onChange={(event) => setSystemMessage(event.target.value)}
             placeholder="Instructions for how the AI should generate questions..."
-            rows={4}
+            rows={3}
             className="ai-textarea system-msg"
           />
         </div>
@@ -942,7 +972,7 @@ export default function AISettingsModal({
             value={referenceText}
             onChange={(event) => setReferenceText(event.target.value)}
             placeholder="Paste source material — articles, lesson notes, textbook excerpts — to ground question generation in your content."
-            rows={4}
+            rows={3}
             className="ai-textarea reference-msg"
           />
         </div>
