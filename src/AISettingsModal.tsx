@@ -828,8 +828,6 @@ export default function AISettingsModal({
                 <div className="model-chip-grid">
                   {[
                     'google/gemini-3.1-flash-lite-preview',
-                    'google/gemini-3-flash-preview',
-                    'google/gemini-3.1-pro-preview',
                   ].map((model) => (
                     <button
                       key={model}
@@ -844,7 +842,6 @@ export default function AISettingsModal({
                 <div className="model-chip-grid">
                   {[
                     'google/gemma-4-31b-it',
-                    'google/gemma-4-26b-a4b-it',
                   ].map((model) => (
                     <button
                       key={model}
@@ -855,12 +852,27 @@ export default function AISettingsModal({
                     </button>
                   ))}
                 </div>
-                <div className="model-chip-group-label">MiniMax &amp; Kimi</div>
+                <div className="model-chip-group-label">MiniMax, Kimi &amp; GLM</div>
                 <div className="model-chip-grid">
                   {[
                     'minimax/minimax-m2.7',
-                    'minimax/minimax-m2.5',
                     'moonshotai/kimi-k2.5',
+                    'z-ai/glm-5-turbo',
+                  ].map((model) => (
+                    <button
+                      key={model}
+                      className={`model-chip${modelId === model ? ' selected' : ''}`}
+                      onClick={() => { setModelId(model); setTestResult(null); }}
+                    >
+                      {model.split('/')[1]}
+                    </button>
+                  ))}
+                </div>
+                <div className="model-chip-group-label">DeepSeek</div>
+                <div className="model-chip-grid">
+                  {[
+                    'deepseek/deepseek-v3.2',
+                    'deepseek/deepseek-r1-0528',
                   ].map((model) => (
                     <button
                       key={model}
