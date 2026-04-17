@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check": "tsc --noEmit",
     "start": "next start",
     "seed:admin": "node scripts/seed-admin.js",
     "lint": "next lint",
