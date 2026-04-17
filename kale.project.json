@@ -1,4 +1,4 @@
 {
-  "projectShape": "static_site",
-  "requestTimeLogic": "none"
+  "projectShape": "worker_app",
+  "requestTimeLogic": "allowed"
 }
