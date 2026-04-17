@@ -266,6 +266,8 @@ export default function AISettingsModal({
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [testCooldown, setTestCooldown] = useState(0);
+  const [generateCooldown, setGenerateCooldown] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -311,6 +313,16 @@ export default function AISettingsModal({
       // Ignore malformed saved settings.
     }
   }, []);
+
+  const startCooldown = (setter: React.Dispatch<React.SetStateAction<number>>, seconds: number) => {
+    setter(seconds);
+    const interval = setInterval(() => {
+      setter((prev) => {
+        if (prev <= 1) { clearInterval(interval); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const testApiKey = async () => {
     setTestResult(null);
@@ -442,6 +454,7 @@ export default function AISettingsModal({
       setTestResult({ success: false, message: errorMessage });
     } finally {
       setIsTesting(false);
+      startCooldown(setTestCooldown, 10);
     }
   };
 
@@ -760,6 +773,7 @@ export default function AISettingsModal({
       setTestResult({ success: false, message: `Generation failed: ${errorMessage}` });
     } finally {
       setIsGenerating(false);
+      startCooldown(setGenerateCooldown, 45);
     }
   };
 
@@ -994,13 +1008,13 @@ export default function AISettingsModal({
           <button
             className="ai-btn-test"
             onClick={testApiKey}
-            disabled={isTesting || (aiProvider === 'openrouter' ? (!apiKey || !modelId) : !ollamaModel)}
+            disabled={isTesting || testCooldown > 0 || (aiProvider === 'openrouter' ? (!apiKey || !modelId) : !ollamaModel)}
             type="button"
           >
-            {isTesting ? 'Testing...' : 'Test Connection'}
+            {isTesting ? 'Testing...' : testCooldown > 0 ? `Wait ${testCooldown}s` : 'Test Connection'}
           </button>
-          <button className="ai-btn-generate" onClick={generateQuestions} disabled={isGenerating} type="button">
-            {isGenerating ? 'Generating...' : 'Save & Generate'}
+          <button className="ai-btn-generate" onClick={generateQuestions} disabled={isGenerating || generateCooldown > 0} type="button">
+            {isGenerating ? 'Generating...' : generateCooldown > 0 ? `Wait ${generateCooldown}s` : 'Save & Generate'}
           </button>
         </div>
       </div>
